@@ -156,7 +156,16 @@ function App() {
     }
 
     setExpenses(newExpenses)
-    setActiveTab('list')
+
+    setFixedExpenses(prev => prev.map(item => {
+      if (item.id === fixedExpense.id) {
+        const applied = item.appliedMonths || []
+        if (!applied.includes(currentMonthKey)) {
+          return { ...item, appliedMonths: [...applied, currentMonthKey] }
+        }
+      }
+      return item
+    }))
   }
 
   const displaySalary = currentSalary > 0 ? formatCLP(currentSalary) : ''
@@ -164,13 +173,13 @@ function App() {
   if (!isLoaded) return null
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-50 via-purple-50 to-pink-50 py-10 px-4 sm:px-6 lg:px-8 font-sans selection:bg-purple-300 selection:text-purple-900">
+    <div className="min-h-screen bg-slate-950 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-purple-950/20 to-slate-950 py-10 px-4 sm:px-6 lg:px-8 font-sans selection:bg-fuchsia-500/30 selection:text-fuchsia-200 text-slate-100">
       <div className="max-w-2xl mx-auto space-y-8 animate-fade-in">
         <header className="text-center transform hover:scale-105 transition-transform duration-500">
-          <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-500 tracking-tight drop-shadow-sm mb-2">
+          <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-fuchsia-400 to-pink-400 tracking-tight drop-shadow-sm mb-2">
             Gestor de Gastos
           </h1>
-          <p className="text-purple-600/80 font-medium tracking-wide">Administra tu dinero con estilo</p>
+          <p className="text-slate-400 font-medium tracking-wide">Administra tu dinero con estilo</p>
         </header>
 
         <MonthSummary
@@ -183,23 +192,23 @@ function App() {
           remainingSalary={remainingSalary}
         />
 
-        <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-purple-200/50 border border-white overflow-hidden">
-          <div className="flex p-2 bg-purple-50/50 flex-wrap sm:flex-nowrap gap-2 sm:gap-0">
+        <div className="bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-2xl shadow-purple-900/20 border border-slate-800 overflow-hidden">
+          <div className="flex p-3 bg-slate-950/50 flex-wrap sm:flex-nowrap gap-2">
             <button
               onClick={() => setActiveTab('dashboard')}
-              className={`flex-1 py-4 font-extrabold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] ${activeTab === 'dashboard' ? 'bg-white text-violet-700 shadow-md shadow-purple-200/50 scale-100' : 'text-purple-400 hover:text-purple-600 hover:bg-white/50 scale-95'}`}
+              className={`flex-1 py-4 font-extrabold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] ${activeTab === 'dashboard' ? 'bg-slate-800 text-fuchsia-400 shadow-lg shadow-black/50 border border-slate-700 scale-100' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 scale-95 border border-transparent'}`}
             >
               ✨ Registrar
             </button>
             <button
               onClick={() => setActiveTab('list')}
-              className={`flex-1 py-4 font-extrabold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] ${activeTab === 'list' ? 'bg-white text-violet-700 shadow-md shadow-purple-200/50 scale-100' : 'text-purple-400 hover:text-purple-600 hover:bg-white/50 scale-95'}`}
+              className={`flex-1 py-4 font-extrabold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] ${activeTab === 'list' ? 'bg-slate-800 text-fuchsia-400 shadow-lg shadow-black/50 border border-slate-700 scale-100' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 scale-95 border border-transparent'}`}
             >
               📄 Lista
             </button>
             <button
               onClick={() => setActiveTab('fixed')}
-              className={`flex-1 py-4 font-extrabold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] ${activeTab === 'fixed' ? 'bg-white text-violet-700 shadow-md shadow-purple-200/50 scale-100' : 'text-purple-400 hover:text-purple-600 hover:bg-white/50 scale-95'}`}
+              className={`flex-1 py-4 font-extrabold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] ${activeTab === 'fixed' ? 'bg-slate-800 text-fuchsia-400 shadow-lg shadow-black/50 border border-slate-700 scale-100' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 scale-95 border border-transparent'}`}
             >
               ⭐ Fijos
             </button>
@@ -223,8 +232,7 @@ function App() {
 
             {activeTab === 'list' && (
               <ExpenseList
-                currentMonthExpenses={currentMonthExpenses}
-                currentMonthKey={currentMonthKey}
+                expenses={expenses}
                 handleEdit={handleEdit}
                 handleDelete={handleDelete}
               />

@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
+import Swal from 'sweetalert2'
 import { formatCLP, parseCLP } from '../utils/currency'
 
 function FixedExpenses({ fixedExpenses, setFixedExpenses, applyFixedExpenseToMonth, currentMonthDate }) {
@@ -8,6 +10,8 @@ function FixedExpenses({ fixedExpenses, setFixedExpenses, applyFixedExpenseToMon
     const [fixedType, setFixedType] = useState('single')
     const [fixedDays, setFixedDays] = useState([])
     const [fixedErrors, setFixedErrors] = useState({})
+
+    const currentMonthKey = format(currentMonthDate, 'MM-yyyy')
 
     const weekDays = [
         { id: 1, name: 'Lun' },
@@ -25,6 +29,40 @@ function FixedExpenses({ fixedExpenses, setFixedExpenses, applyFixedExpenseToMon
         setFixedDays(prev =>
             prev.includes(dayId) ? prev.filter(d => d !== dayId) : [...prev, dayId]
         )
+    }
+
+    const handleApplyToMonth = async (item) => {
+        const applied = item.appliedMonths || []
+        if (applied.includes(currentMonthKey)) {
+            const result = await Swal.fire({
+                title: '¿Plantilla duplicada?',
+                text: `Ya aplicaste la plantilla "${item.description}" en este mes. ¿Estás seguro de querer añadirla nuevamente?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#8b5cf6',
+                cancelButtonColor: '#f43f5e',
+                confirmButtonText: 'Sí, duplicar',
+                cancelButtonText: 'Cancelar',
+                background: '#0f172a',
+                color: '#f1f5f9'
+            })
+            if (!result.isConfirmed) return
+        }
+
+        applyFixedExpenseToMonth(item)
+
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'success',
+            title: `¡"${item.description}" añadido a ${format(currentMonthDate, 'MMMM', { locale: es })}!`,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#0f172a',
+            color: '#f1f5f9',
+            iconColor: '#10b981'
+        })
     }
 
     const handleSaveFixedExpense = (e) => {
@@ -56,13 +94,26 @@ function FixedExpenses({ fixedExpenses, setFixedExpenses, applyFixedExpenseToMon
                 description: fixedDescription,
                 amount: numericAmount,
                 type: fixedType,
-                days: fixedType === 'weekly' ? fixedDays : []
+                days: fixedType === 'weekly' ? fixedDays : [],
+                appliedMonths: []
             }
             setFixedExpenses([...fixedExpenses, newFixed])
             setFixedDescription('')
             setFixedAmount('')
             setFixedDays([])
             setFixedType('single')
+
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Plantilla guardada',
+                showConfirmButton: false,
+                timer: 2000,
+                background: '#0f172a',
+                color: '#f1f5f9',
+                iconColor: '#10b981'
+            })
         }
     }
 
@@ -71,26 +122,26 @@ function FixedExpenses({ fixedExpenses, setFixedExpenses, applyFixedExpenseToMon
     }
 
     return (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-10">
+        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-10 relative">
             <div>
-                <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 mb-6">
+                <h2 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400 mb-6">
                     Plantillas de Gastos Fijos
                 </h2>
-                <form onSubmit={handleSaveFixedExpense} className="space-y-5 bg-purple-50/50 p-6 rounded-3xl border border-purple-100">
+                <form onSubmit={handleSaveFixedExpense} className="space-y-5 bg-slate-900/50 p-6 rounded-3xl border border-slate-800">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                         <div>
-                            <label htmlFor="fixedDescription" className="block text-sm font-bold text-violet-900 mb-2">Nombre (Ej: Gym, Pasajes):</label>
+                            <label htmlFor="fixedDescription" className="block text-sm font-bold text-violet-300 mb-2">Nombre (Ej: Gym, Pasajes):</label>
                             <input
                                 type="text"
                                 id="fixedDescription"
                                 value={fixedDescription}
                                 onChange={(e) => setFixedDescription(e.target.value)}
-                                className="block w-full px-4 py-3 bg-white border-2 border-purple-100 rounded-xl text-purple-900 font-medium focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all outline-none"
+                                className="block w-full px-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-medium focus:ring-2 focus:ring-fuchsia-500/50 focus:border-fuchsia-500 transition-all outline-none placeholder-slate-700"
                             />
-                            {fixedErrors.description && <p className="mt-1 text-sm text-pink-600 font-bold">{fixedErrors.description}</p>}
+                            {fixedErrors.description && <p className="mt-1 text-sm text-rose-400 font-bold">{fixedErrors.description}</p>}
                         </div>
                         <div>
-                            <label htmlFor="fixedAmount" className="block text-sm font-bold text-violet-900 mb-2">Monto Total Diario/Único:</label>
+                            <label htmlFor="fixedAmount" className="block text-sm font-bold text-violet-300 mb-2">Monto Total Diario/Único:</label>
                             <div className="relative">
                                 <span className="absolute inset-y-0 left-0 pl-4 flex items-center text-fuchsia-500 font-bold">$</span>
                                 <input
@@ -98,92 +149,92 @@ function FixedExpenses({ fixedExpenses, setFixedExpenses, applyFixedExpenseToMon
                                     id="fixedAmount"
                                     value={fixedAmount}
                                     onChange={handleFixedAmountChange}
-                                    className="block w-full pl-8 pr-4 py-3 bg-white border-2 border-purple-100 rounded-xl text-purple-900 font-bold focus:ring-4 focus:ring-fuchsia-500/20 focus:border-fuchsia-500 transition-all outline-none"
+                                    className="block w-full pl-8 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-bold focus:ring-2 focus:ring-fuchsia-500/50 focus:border-fuchsia-500 transition-all outline-none placeholder-slate-700"
                                 />
                             </div>
-                            {fixedErrors.amount && <p className="mt-1 text-sm text-pink-600 font-bold">{fixedErrors.amount}</p>}
+                            {fixedErrors.amount && <p className="mt-1 text-sm text-rose-400 font-bold">{fixedErrors.amount}</p>}
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-violet-900 mb-2">Tipo de Gasto:</label>
+                        <label className="block text-sm font-bold text-violet-300 mb-2">Tipo de Gasto:</label>
                         <div className="flex gap-4">
-                            <label className="flex items-center gap-2 cursor-pointer bg-white px-4 py-3 rounded-xl border-2 border-purple-100 hover:border-purple-300 transition-all flex-1">
+                            <label className="flex items-center gap-2 cursor-pointer bg-slate-950 px-4 py-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all flex-1">
                                 <input
                                     type="radio"
                                     checked={fixedType === 'single'}
                                     onChange={() => setFixedType('single')}
-                                    className="text-fuchsia-600 focus:ring-fuchsia-500 w-5 h-5"
+                                    className="text-fuchsia-600 focus:ring-fuchsia-500 w-5 h-5 bg-slate-900 border-slate-700"
                                 />
-                                <span className="font-bold text-purple-900">Mensual Único</span>
+                                <span className="font-bold text-slate-200">Mensual Único</span>
                             </label>
-                            <label className="flex items-center gap-2 cursor-pointer bg-white px-4 py-3 rounded-xl border-2 border-purple-100 hover:border-purple-300 transition-all flex-1">
+                            <label className="flex items-center gap-2 cursor-pointer bg-slate-950 px-4 py-3 rounded-xl border border-slate-800 hover:border-slate-700 transition-all flex-1">
                                 <input
                                     type="radio"
                                     checked={fixedType === 'weekly'}
                                     onChange={() => setFixedType('weekly')}
-                                    className="text-fuchsia-600 focus:ring-fuchsia-500 w-5 h-5"
+                                    className="text-fuchsia-600 focus:ring-fuchsia-500 w-5 h-5 bg-slate-900 border-slate-700"
                                 />
-                                <span className="font-bold text-purple-900">Repetir por Días</span>
+                                <span className="font-bold text-slate-200">Repetir por Días</span>
                             </label>
                         </div>
                     </div>
 
                     {fixedType === 'weekly' && (
                         <div className="animate-in fade-in slide-in-from-top-2">
-                            <label className="block text-sm font-bold text-violet-900 mb-3">Selecciona los días (Ej: Lunes a Viernes):</label>
+                            <label className="block text-sm font-bold text-violet-300 mb-3">Selecciona los días (Ej: Lunes a Viernes):</label>
                             <div className="flex flex-wrap gap-2">
                                 {weekDays.map(day => (
                                     <button
                                         key={day.id}
                                         type="button"
                                         onClick={() => toggleFixedDay(day.id)}
-                                        className={`px-4 py-2 rounded-xl font-bold transition-all transform hover:scale-105 ${fixedDays.includes(day.id) ? 'bg-fuchsia-500 text-white shadow-md shadow-fuchsia-200' : 'bg-white text-purple-400 border-2 border-purple-100 hover:border-purple-300'}`}
+                                        className={`px-4 py-2 rounded-xl font-bold transition-all transform hover:scale-105 ${fixedDays.includes(day.id) ? 'bg-fuchsia-600 text-white shadow-md shadow-fuchsia-900/50 border border-fuchsia-500' : 'bg-slate-950 text-slate-400 border border-slate-800 hover:border-slate-700 hover:text-slate-300'}`}
                                     >
                                         {day.name}
                                     </button>
                                 ))}
                             </div>
-                            {fixedErrors.days && <p className="mt-2 text-sm text-pink-600 font-bold">{fixedErrors.days}</p>}
+                            {fixedErrors.days && <p className="mt-2 text-sm text-rose-400 font-bold">{fixedErrors.days}</p>}
                         </div>
                     )}
 
-                    <button type="submit" className="w-full bg-violet-600 text-white font-extrabold py-4 rounded-xl hover:bg-violet-700 transition-colors mt-4">
+                    <button type="submit" className="w-full bg-violet-600 text-white font-extrabold py-4 rounded-xl hover:bg-violet-500 transition-colors mt-4">
                         Guardar Plantilla
                     </button>
                 </form>
             </div>
 
             <div>
-                <h3 className="text-xl font-bold text-violet-900 mb-4 border-b-2 border-purple-100 pb-2">Mis Plantillas</h3>
+                <h3 className="text-xl font-bold text-violet-300 mb-4 border-b border-slate-800 pb-2">Mis Plantillas</h3>
                 <div className="space-y-4">
                     {fixedExpenses.length === 0 ? (
-                        <p className="text-purple-400 font-medium italic text-center">No has creado plantillas de gastos fijos.</p>
+                        <p className="text-slate-500 font-medium italic text-center">No has creado plantillas de gastos fijos.</p>
                     ) : (
                         fixedExpenses.map(item => (
-                            <div key={item.id} className="flex flex-col sm:flex-row justify-between items-center bg-white p-5 rounded-2xl border-2 border-purple-100 shadow-sm gap-4">
+                            <div key={item.id} className="flex flex-col sm:flex-row justify-between items-center bg-slate-900 p-5 rounded-2xl border border-slate-800 shadow-sm gap-4">
                                 <div className="flex-1 w-full">
-                                    <p className="font-extrabold text-violet-900">{item.description}</p>
-                                    <p className="text-sm font-bold text-rose-500 mt-1">${formatCLP(item.amount)} {item.type === 'weekly' && 'por día'}</p>
+                                    <p className="font-extrabold text-slate-100">{item.description}</p>
+                                    <p className="text-sm font-bold text-rose-400 mt-1">${formatCLP(item.amount)} {item.type === 'weekly' && 'por día'}</p>
                                     {item.type === 'weekly' && (
                                         <div className="flex gap-1 mt-2">
                                             {item.days.map(d => {
                                                 const dayName = weekDays.find(w => w.id === d)?.name;
-                                                return <span key={d} className="text-xs font-bold bg-fuchsia-100 text-fuchsia-700 px-2 py-1 rounded-md">{dayName}</span>
+                                                return <span key={d} className="text-xs font-bold bg-fuchsia-500/10 text-fuchsia-300 border border-fuchsia-500/20 px-2 py-1 rounded-md">{dayName}</span>
                                             })}
                                         </div>
                                     )}
                                 </div>
                                 <div className="flex gap-2 w-full sm:w-auto">
                                     <button
-                                        onClick={() => applyFixedExpenseToMonth(item)}
-                                        className="flex-1 sm:flex-none bg-gradient-to-r from-emerald-400 to-teal-500 text-white font-bold py-3 px-5 rounded-xl hover:shadow-lg hover:shadow-emerald-200 transition-all transform hover:-translate-y-1"
+                                        onClick={() => handleApplyToMonth(item)}
+                                        className="flex-1 sm:flex-none bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold py-3 px-5 rounded-xl hover:shadow-lg hover:shadow-emerald-900/50 transition-all transform hover:-translate-y-1 capitalize"
                                     >
-                                        Añadir a {format(currentMonthDate, 'MMMM')}
+                                        Añadir a {format(currentMonthDate, 'MMMM', { locale: es })}
                                     </button>
                                     <button
                                         onClick={() => handleDeleteFixedExpense(item.id)}
-                                        className="bg-rose-100 text-rose-600 font-bold py-3 px-4 rounded-xl hover:bg-rose-200 transition-colors"
+                                        className="bg-rose-500/10 text-rose-400 border border-rose-500/20 font-bold py-3 px-4 rounded-xl hover:bg-rose-500 hover:text-white transition-colors"
                                     >
                                         X
                                     </button>

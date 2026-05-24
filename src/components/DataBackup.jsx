@@ -41,14 +41,14 @@ function DataBackup() {
     }
 
     return (
-        <div className="bg-white/70 backdrop-blur-xl rounded-[2rem] shadow-xl shadow-purple-200/50 border border-white p-6 sm:p-8 mt-8 hover:shadow-2xl hover:shadow-purple-200/60 transition-all duration-500">
-            <h3 className="text-xl font-bold text-violet-900 mb-4 border-b-2 border-purple-100 pb-2">Respaldar Información</h3>
-            <p className="text-purple-600 text-sm mb-5 font-medium">Guarda una copia de tus gastos o restaura un archivo anterior en caso de limpiar el navegador o cambiar de dispositivo.</p>
+        <div className="bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-800 p-6 sm:p-8 mt-8 hover:border-slate-700 transition-all duration-500">
+            <h3 className="text-xl font-bold text-violet-300 mb-4 border-b border-slate-800 pb-2">Respaldar Información</h3>
+            <p className="text-slate-400 text-sm mb-5 font-medium">Guarda una copia de tus gastos o restaura un archivo anterior en caso de limpiar el navegador.</p>
 
             <div className="flex flex-col sm:flex-row gap-4">
                 <button
                     onClick={handleExport}
-                    className="flex-1 bg-violet-100 text-violet-700 font-extrabold py-4 px-5 rounded-2xl hover:bg-violet-200 transition-colors transform hover:-translate-y-1"
+                    className="flex-1 bg-violet-900/30 text-violet-300 border border-violet-800/50 font-extrabold py-4 px-5 rounded-2xl hover:bg-violet-800 hover:text-white transition-colors transform hover:-translate-y-1"
                 >
                     Descargar Respaldo
                 </button>
@@ -62,7 +62,7 @@ function DataBackup() {
                 />
                 <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex-1 bg-fuchsia-100 text-fuchsia-700 font-extrabold py-4 px-5 rounded-2xl hover:bg-fuchsia-200 transition-colors transform hover:-translate-y-1"
+                    className="flex-1 bg-fuchsia-900/30 text-fuchsia-300 border border-fuchsia-800/50 font-extrabold py-4 px-5 rounded-2xl hover:bg-fuchsia-800 hover:text-white transition-colors transform hover:-translate-y-1"
                 >
                     Cargar Respaldo
                 </button>
