@@ -41,9 +41,9 @@ Todo el diseño responde a un único archivo `theme.js` y al hook `useThemeStyle
 - [x] Modificación de alertas nativas a sistema de notificaciones global.
 
 ### Fase 3: Despliegue y Optimización 🚀
-- [ ] Despliegue en producción mediante Vercel / Netlify.
+- [x] Despliegue en producción mediante Vercel / Netlify.
 - [x] Configuración como PWA (Progressive Web App) para instalar en móviles.
-- [ ] Pruebas unitarias para los Hooks de cálculo matemático.
+- [x] Pruebas unitarias para los Hooks de cálculo matemático.
 
 ## 🛠️ Instalación y Uso
 
