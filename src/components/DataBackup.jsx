@@ -1,7 +1,11 @@
 import { useRef } from 'react'
+import Swal from 'sweetalert2'
+import { getThemeClass } from '../utils/theme'
 
-function DataBackup() {
+function DataBackup({ themeMode = 'dark' }) {
     const fileInputRef = useRef(null)
+    const s = getThemeClass(themeMode)
+    const isDark = themeMode === 'dark'
 
     const handleExport = () => {
         const data = localStorage.getItem('expenseTrackerV6')
@@ -28,12 +32,27 @@ function DataBackup() {
                 const importedData = JSON.parse(event.target.result)
                 if (importedData.salaries || importedData.expenses) {
                     localStorage.setItem('expenseTrackerV6', JSON.stringify(importedData))
+                    localStorage.setItem('backupImportedFlag', 'true')
                     window.location.reload()
                 } else {
-                    alert('El archivo no tiene el formato correcto.')
+                    Swal.fire({
+                        title: 'Error de Formato',
+                        text: 'El archivo seleccionado no tiene el formato correcto.',
+                        icon: 'error',
+                        background: s.swal.background,
+                        color: s.swal.color,
+                        confirmButtonColor: s.swal.confirmButtonColor
+                    })
                 }
-            } catch (error) {
-                alert('Error al leer el archivo JSON.')
+            } catch {
+                Swal.fire({
+                    title: 'Error al Leer',
+                    text: 'Ocurrió un error al intentar leer el archivo de respaldo.',
+                    icon: 'error',
+                    background: s.swal.background,
+                    color: s.swal.color,
+                    confirmButtonColor: s.swal.confirmButtonColor
+                })
             }
         }
         reader.readAsText(file)
@@ -41,14 +60,18 @@ function DataBackup() {
     }
 
     return (
-        <div className="bg-slate-900/80 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-slate-800 p-6 sm:p-8 mt-8 hover:border-slate-700 transition-all duration-500">
-            <h3 className="text-xl font-bold text-violet-300 mb-4 border-b border-slate-800 pb-2">Respaldar Información</h3>
-            <p className="text-slate-400 text-sm mb-5 font-medium">Guarda una copia de tus gastos o restaura un archivo anterior en caso de limpiar el navegador.</p>
+        <div className={`${s.cardBg} rounded-[2rem] p-6 sm:p-8 mt-8 transition-all duration-500`}>
+            <h3 className={`text-xl font-bold ${isDark ? 'text-violet-300' : 'text-violet-600'} mb-4 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'} pb-2 transition-colors duration-500`}>
+                Respaldar Información
+            </h3>
+            <p className={`${s.bodyTextMuted} text-sm mb-5 font-medium transition-colors duration-500`}>
+                Guarda una copia de tus gastos o restaura un archivo anterior en caso de limpiar el navegador.
+            </p>
 
             <div className="flex flex-col sm:flex-row gap-4">
                 <button
                     onClick={handleExport}
-                    className="flex-1 bg-violet-900/30 text-violet-300 border border-violet-800/50 font-extrabold py-4 px-5 rounded-2xl hover:bg-violet-800 hover:text-white transition-colors transform hover:-translate-y-1"
+                    className={`flex-1 ${isDark ? 'bg-violet-900/30 text-violet-300 border-violet-800/50 hover:bg-violet-800' : 'bg-violet-50 text-violet-600 border-violet-200 hover:bg-violet-600 hover:text-white'} border font-extrabold py-4 px-5 rounded-2xl transition-all transform hover:-translate-y-0.5 cursor-pointer`}
                 >
                     Descargar Respaldo
                 </button>
@@ -62,7 +85,7 @@ function DataBackup() {
                 />
                 <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="flex-1 bg-fuchsia-900/30 text-fuchsia-300 border border-fuchsia-800/50 font-extrabold py-4 px-5 rounded-2xl hover:bg-fuchsia-800 hover:text-white transition-colors transform hover:-translate-y-1"
+                    className={`flex-1 ${isDark ? 'bg-fuchsia-900/30 text-fuchsia-300 border-fuchsia-800/50 hover:bg-fuchsia-800' : 'bg-fuchsia-50 text-fuchsia-600 border-fuchsia-200 hover:bg-fuchsia-600 hover:text-white'} border font-extrabold py-4 px-5 rounded-2xl transition-all transform hover:-translate-y-0.5 cursor-pointer`}
                 >
                     Cargar Respaldo
                 </button>
