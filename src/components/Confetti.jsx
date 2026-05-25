@@ -7,24 +7,23 @@ function Confetti({ trigger }) {
         if (!trigger) return
 
         const colors = [
-            '#38bdf8', '#0ea5e9', // cian
-            '#ec4899', '#f43f5e', // rosa
-            '#10b981', '#059669', // verde
-            '#a855f7', '#7c3aed', // violeta
-            '#f59e0b', '#d97706', // naranja
-            '#eab308'             // amarillo
+            '#38bdf8', '#0ea5e9',
+            '#ec4899', '#f43f5e',
+            '#10b981', '#059669',
+            '#a855f7', '#7c3aed',
+            '#f59e0b', '#d97706',
+            '#eab308'
         ]
 
-        // Wrap in setTimeout to avoid calling setState synchronously in effect
         const stateTimer = setTimeout(() => {
             const piecesArray = Array.from({ length: 60 }).map((_, index) => {
-                const left = Math.random() * 100 // percentage
-                const size = Math.random() * 8 + 6 // px
-                const delay = Math.random() * 1.5 // seconds
-                const duration = Math.random() * 2 + 2.5 // seconds
+                const left = Math.random() * 100
+                const size = Math.random() * 8 + 6
+                const delay = Math.random() * 1.5
+                const duration = Math.random() * 2 + 2.5
                 const color = colors[Math.floor(Math.random() * colors.length)]
                 const spinDirection = Math.random() > 0.5 ? 1 : -1
-                const rotation = Math.random() * 360 // pre-calculate to keep render pure
+                const rotation = Math.random() * 360
 
                 return {
                     id: index,
@@ -57,7 +56,8 @@ function Confetti({ trigger }) {
 
     return (
         <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-            <style dangerouslySetInnerHTML={{ __html: `
+            <style dangerouslySetInnerHTML={{
+                __html: `
                 @keyframes fall {
                     0% {
                         transform: translateY(-20px) rotate(0deg) translateX(0);

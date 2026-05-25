@@ -1,11 +1,16 @@
 import { useRef } from 'react'
-import Swal from 'sweetalert2'
-import { getThemeClass } from '../utils/theme'
+import { format } from 'date-fns'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faDownload, faUpload, faDatabase } from '@fortawesome/free-solid-svg-icons'
+import { useAppAlert } from '../hooks/useAppAlert'
+import { useThemeStyles } from '../hooks/useThemeStyles'
+import CustomButton from './CustomButton'
+import SectionHeader from './SectionHeader'
 
-function DataBackup({ themeMode = 'dark' }) {
+function DataBackup({ themeMode = 'dark', activeTheme }) {
     const fileInputRef = useRef(null)
-    const s = getThemeClass(themeMode)
-    const isDark = themeMode === 'dark'
+    const { s, isDark, textGradientClass, aura } = useThemeStyles(themeMode, activeTheme)
+    const { showAlert } = useAppAlert(themeMode)
 
     const handleExport = () => {
         const data = localStorage.getItem('expenseTrackerV6')
@@ -15,7 +20,9 @@ function DataBackup({ themeMode = 'dark' }) {
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
-        link.download = 'backup_gastos.json'
+
+        const dateStr = format(new Date(), 'dd-MM-yyyy_HH-mm')
+        link.download = `Mis_Gastos_Aura_${dateStr}.json`
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
@@ -35,24 +42,10 @@ function DataBackup({ themeMode = 'dark' }) {
                     localStorage.setItem('backupImportedFlag', 'true')
                     window.location.reload()
                 } else {
-                    Swal.fire({
-                        title: 'Error de Formato',
-                        text: 'El archivo seleccionado no tiene el formato correcto.',
-                        icon: 'error',
-                        background: s.swal.background,
-                        color: s.swal.color,
-                        confirmButtonColor: s.swal.confirmButtonColor
-                    })
+                    showAlert('Error de Formato', 'El archivo seleccionado no tiene el formato correcto.', 'error')
                 }
             } catch {
-                Swal.fire({
-                    title: 'Error al Leer',
-                    text: 'Ocurrió un error al intentar leer el archivo de respaldo.',
-                    icon: 'error',
-                    background: s.swal.background,
-                    color: s.swal.color,
-                    confirmButtonColor: s.swal.confirmButtonColor
-                })
+                showAlert('Error al Leer', 'Ocurrió un error al intentar leer el archivo de respaldo.', 'error')
             }
         }
         reader.readAsText(file)
@@ -61,20 +54,29 @@ function DataBackup({ themeMode = 'dark' }) {
 
     return (
         <div className={`${s.cardBg} rounded-[2rem] p-6 sm:p-8 mt-8 transition-all duration-500`}>
-            <h3 className={`text-xl font-bold ${isDark ? 'text-violet-300' : 'text-violet-600'} mb-4 border-b ${isDark ? 'border-slate-800' : 'border-slate-200'} pb-2 transition-colors duration-500`}>
-                Respaldar Información
-            </h3>
-            <p className={`${s.bodyTextMuted} text-sm mb-5 font-medium transition-colors duration-500`}>
-                Guarda una copia de tus gastos o restaura un archivo anterior en caso de limpiar el navegador.
-            </p>
+            <SectionHeader
+                as="h3"
+                title="Respaldar Información"
+                icon={faDatabase}
+                gradientClass={textGradientClass}
+                iconClass={aura.icon}
+            />
+            <div className={`mb-6 p-4 rounded-xl text-sm font-medium ${isDark ? 'bg-amber-500/10 border border-amber-500/20 text-amber-200' : 'bg-amber-50 border border-amber-200 text-amber-800'}`}>
+                <p className="mb-2"><strong>⚠️ ¡Importante!</strong> Tu información se guarda localmente en este navegador.</p>
+                <p>Si borras los <strong>datos de navegación</strong> (historial, caché), usas programas de limpieza o quieres ver tu información en <strong>otro dispositivo</strong>, perderás tus registros. ¡Descarga un archivo de respaldo regularmente!</p>
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-                <button
+                <CustomButton
                     onClick={handleExport}
-                    className={`flex-1 ${isDark ? 'bg-violet-900/30 text-violet-300 border-violet-800/50 hover:bg-violet-800' : 'bg-violet-50 text-violet-600 border-violet-200 hover:bg-violet-600 hover:text-white'} border font-extrabold py-4 px-5 rounded-2xl transition-all transform hover:-translate-y-0.5 cursor-pointer`}
+                    variant="primary"
+                    icon={faDownload}
+                    className="flex-1 py-4 px-5 !rounded-2xl"
+                    activeTheme={activeTheme}
+                    isDark={isDark}
                 >
                     Descargar Respaldo
-                </button>
+                </CustomButton>
 
                 <input
                     type="file"
@@ -83,12 +85,15 @@ function DataBackup({ themeMode = 'dark' }) {
                     onChange={handleImport}
                     className="hidden"
                 />
-                <button
+                <CustomButton
                     onClick={() => fileInputRef.current?.click()}
-                    className={`flex-1 ${isDark ? 'bg-fuchsia-900/30 text-fuchsia-300 border-fuchsia-800/50 hover:bg-fuchsia-800' : 'bg-fuchsia-50 text-fuchsia-600 border-fuchsia-200 hover:bg-fuchsia-600 hover:text-white'} border font-extrabold py-4 px-5 rounded-2xl transition-all transform hover:-translate-y-0.5 cursor-pointer`}
+                    variant="secondary"
+                    icon={faUpload}
+                    className="flex-1 py-4 px-5 !rounded-2xl"
+                    isDark={isDark}
                 >
                     Cargar Respaldo
-                </button>
+                </CustomButton>
             </div>
         </div>
     )
