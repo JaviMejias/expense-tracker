@@ -10,6 +10,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
+      devOptions: {
+        enabled: true
+      },
       manifest: {
         name: 'Gestor de Gastos Aura',
         short_name: 'GastosAura',
