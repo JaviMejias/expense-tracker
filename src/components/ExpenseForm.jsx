@@ -1,31 +1,109 @@
 import { es } from 'date-fns/locale'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlusCircle, faSave, faTimesCircle, faTags, faDollarSign, faCalendarDay } from '@fortawesome/free-solid-svg-icons'
-import { formatCLP } from '../utils/currency'
+import Swal from 'sweetalert2'
+import { useNavigate } from 'react-router-dom'
+import { formatCLP, parseCLP } from '../utils/currency'
 import CustomDatePicker from './CustomDatePicker'
 import CustomButton from './CustomButton'
 import CustomInput from './CustomInput'
 import { useThemeStyles } from '../hooks/useThemeStyles'
 import CategorySelector from './CategorySelector'
+import { appThemes } from '../utils/theme'
 
-function ExpenseForm({
-    editingId,
-    expenseDate,
-    setExpenseDate,
-    description,
-    setDescription,
-    amount,
-    handleAmountChange,
-    setAmount,
-    errors,
-    handleSubmit,
-    handleCancelEdit,
-    category = 'otros',
-    setCategory,
-    categories = [],
-    themeMode = 'dark',
-    activeTheme
-}) {
+import { useDataStore } from '../store/useDataStore'
+import { useUIStore } from '../store/useUIStore'
+import { useThemeStore } from '../store/useThemeStore'
+
+function ExpenseForm() {
+    const { categories, addExpense, updateExpense } = useDataStore()
+    const { 
+        expenseDate, setExpenseDate, 
+        description, setDescription, 
+        amount, setAmount, 
+        category, setCategory, 
+        editingId, setEditingId, 
+        errors, setErrors, 
+        resetForm 
+    } = useUIStore()
+    const navigate = useNavigate()
+    const { themeMode, currentTheme } = useThemeStore()
+    const activeTheme = appThemes[currentTheme] || appThemes.classic
+
+    const handleAmountChange = (e) => {
+        const val = e.target.value
+        const filtered = val.replace(/[^0-9+\-*/().\s]/g, '')
+        setAmount(filtered)
+    }
+
+    const handleSubmit = (e) => {
+        e.preventDefault()
+        let currentErrors = {}
+        let isValid = true
+
+        if (!expenseDate) {
+            currentErrors.expenseDate = 'La fecha es obligatoria.'
+            isValid = false
+        }
+
+        if (!description.trim()) {
+            currentErrors.description = 'La descripción no puede estar vacía.'
+            isValid = false
+        }
+
+        const numericAmount = parseCLP(amount)
+        if (numericAmount <= 0) {
+            currentErrors.amount = 'Ingresa un monto válido mayor a cero.'
+            isValid = false
+        }
+
+        setErrors(currentErrors)
+
+        if (isValid) {
+            if (editingId) {
+                updateExpense(editingId, { date: expenseDate.toISOString(), description, amount: numericAmount, category })
+                setEditingId(null)
+                navigate('/lista')
+
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: `Gasto "${description}" editado con éxito`,
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    background: '#1e293b',
+                    color: '#f1f5f9',
+                    iconColor: '#10b981'
+                })
+            } else {
+                const addedDesc = description
+                addExpense({ id: Date.now(), date: expenseDate.toISOString(), description, amount: numericAmount, category })
+
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: `¡"${addedDesc}" registrado con éxito!`,
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    background: '#1e293b',
+                    color: '#f1f5f9',
+                    iconColor: '#10b981'
+                })
+            }
+            setDescription('')
+            setAmount('')
+            setCategory('otros')
+        }
+    }
+
+    const handleCancelEdit = () => {
+        resetForm()
+        navigate('/lista')
+    }
     const { s, isDark, activeColor, textGradientClass, focusRingClass, aura } = useThemeStyles(themeMode, activeTheme)
 
     return (

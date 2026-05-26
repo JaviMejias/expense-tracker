@@ -1,20 +1,26 @@
 import { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTags, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons'
-import { colorThemes, SYSTEM_CATEGORIES } from '../utils/theme'
+import { faPlus, faTrash, faTags } from '@fortawesome/free-solid-svg-icons'
+import { SYSTEM_CATEGORIES } from '../utils/theme'
 import CustomButton from './CustomButton'
 import CustomInput from './CustomInput'
 import { useThemeStyles } from '../hooks/useThemeStyles'
 import ColorSelector from './ColorSelector'
 import { useAppAlert } from '../hooks/useAppAlert'
+import { useDataStore } from '../store/useDataStore'
+import { useThemeStore } from '../store/useThemeStore'
+import { appThemes } from '../utils/theme'
 
-function CategoryManager({ categories = [], handleAddCategory, handleDeleteCategory, themeMode = 'dark', activeTheme }) {
+function CategoryManager() {
+    const { categories, addCategory, getCategoryForDeletion, confirmDeleteCategory } = useDataStore()
+    const { themeMode, currentTheme } = useThemeStore()
+    const activeTheme = appThemes[currentTheme] || appThemes.classic
+    const { s, isDark, textGradientClass, focusRingClass, aura } = useThemeStyles(themeMode, activeTheme)
+    const { showAlert, showToast, showConfirm } = useAppAlert(themeMode)
+
     const [newCatName, setNewCatName] = useState('')
     const [newCatEmoji, setNewCatEmoji] = useState('')
     const [newCatColor, setNewCatColor] = useState('rose')
-
-    const { s, isDark, textGradientClass, focusRingClass, aura } = useThemeStyles(themeMode, activeTheme)
-    const { showAlert } = useAppAlert(themeMode)
 
     const handleSubmit = (e) => {
         e.preventDefault()
@@ -23,16 +29,41 @@ function CategoryManager({ categories = [], handleAddCategory, handleDeleteCateg
             return
         }
 
-        const success = handleAddCategory({
+        const result = addCategory({
             name: newCatName,
             emoji: newCatEmoji || '🏷️',
             color: newCatColor
         })
 
-        if (success) {
-            setNewCatName('')
-            setNewCatEmoji('')
-            setNewCatColor('rose')
+        if (!result.success) {
+            if (result.reason === 'duplicate') {
+                showAlert('Categoría Duplicada', 'Ya existe una categoría con ese nombre.')
+            }
+            return
+        }
+
+        setNewCatName('')
+        setNewCatEmoji('')
+        setNewCatColor('rose')
+        showToast(`Categoría creada exitosamente`)
+    }
+
+    const handleDelete = async (catId) => {
+        const result = getCategoryForDeletion(catId)
+        if (!result.success) {
+            if (result.reason === 'system') {
+                showAlert('Acción No Permitida', 'Las categorías del sistema por defecto no se pueden eliminar.', 'error')
+            }
+            return
+        }
+
+        const confirmed = await showConfirm(
+            '¿Eliminar categoría?',
+            `¿Estás seguro de eliminar "${result.category.name}"? Los gastos registrados se reasignarán a "Otros".`
+        )
+        if (confirmed.isConfirmed) {
+            confirmDeleteCategory(catId)
+            showToast(`Categoría "${result.category.name}" eliminada y gastos reasignados`)
         }
     }
 
@@ -60,7 +91,7 @@ function CategoryManager({ categories = [], handleAddCategory, handleDeleteCateg
                                     {!isSystem && (
                                         <button
                                             type="button"
-                                            onClick={() => handleDeleteCategory(cat.id)}
+                                            onClick={() => handleDelete(cat.id)}
                                             className="absolute -top-1.5 -right-1.5 bg-rose-950/90 hover:bg-rose-600 border border-rose-500/30 hover:border-rose-400 text-rose-300 hover:text-white w-6 h-6 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md select-none opacity-100 sm:opacity-0 group-hover/item:opacity-100 animate-in fade-in duration-200"
                                             title="Eliminar categoría"
                                         >

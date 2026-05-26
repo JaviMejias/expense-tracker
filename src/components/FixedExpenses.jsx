@@ -14,6 +14,10 @@ import EmptyState from './EmptyState'
 import CategoryBadge from './CategoryBadge'
 import FixedExpenseItem from './FixedExpenseItem'
 import { useCategoryStyles } from '../hooks/useCategoryStyles'
+import { useDataStore } from '../store/useDataStore'
+import { useUIStore } from '../store/useUIStore'
+import { useThemeStore } from '../store/useThemeStore'
+import { appThemes } from '../utils/theme'
 
 const weekDays = [
     { id: 1, name: 'Lun' },
@@ -25,7 +29,11 @@ const weekDays = [
     { id: 0, name: 'Dom' }
 ]
 
-function FixedExpenses({ fixedExpenses, setFixedExpenses, applyFixedExpenseToMonth, currentMonthDate, setCurrentMonthDate, categories = [], themeMode = 'dark', activeTheme }) {
+function FixedExpenses() {
+    const { fixedExpenses, setFixedExpenses, applyFixedExpenseToMonth, categories } = useDataStore()
+    const { currentMonthDate, setCurrentMonthDate } = useUIStore()
+    const { themeMode, currentTheme } = useThemeStore()
+    const activeTheme = appThemes[currentTheme] || appThemes.classic
     const { s, isDark, activeColor, textGradientClass, focusRingClass, aura } = useThemeStyles(themeMode, activeTheme)
     const { showToast, showConfirm } = useAppAlert(themeMode)
     const [fixedDescription, setFixedDescription] = useState('')
@@ -63,7 +71,7 @@ function FixedExpenses({ fixedExpenses, setFixedExpenses, applyFixedExpenseToMon
             if (!result.isConfirmed) return
         }
 
-        applyFixedExpenseToMonth(item)
+        applyFixedExpenseToMonth(item, currentMonthDate)
 
         showToast(`¡"${item.description}" añadido a ${format(currentMonthDate, 'MMMM', { locale: es })}!`)
     }
@@ -112,8 +120,16 @@ function FixedExpenses({ fixedExpenses, setFixedExpenses, applyFixedExpenseToMon
         }
     }
 
-    const handleDeleteFixedExpense = (id) => {
-        setFixedExpenses(fixedExpenses.filter(f => f.id !== id))
+    const handleDeleteFixedExpense = async (id) => {
+        const item = fixedExpenses.find(f => f.id === id)
+        const confirmed = await showConfirm(
+            '¿Eliminar plantilla?',
+            `¿Estás seguro de eliminar "${item?.description || 'esta plantilla'}"?`
+        )
+        if (confirmed.isConfirmed) {
+            setFixedExpenses(fixedExpenses.filter(f => f.id !== id))
+            showToast(`Plantilla "${item?.description}" eliminada`)
+        }
     }
 
     return (

@@ -2,8 +2,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faWallet, faSun, faMoon } from '@fortawesome/free-solid-svg-icons'
 import { appThemes } from '../utils/theme'
 import { useThemeStyles } from '../hooks/useThemeStyles'
+import { useThemeStore } from '../store/useThemeStore'
 
-function Header({ currentTheme = 'classic', setCurrentTheme, themeMode = 'dark', setThemeMode }) {
+function Header() {
+    const { currentTheme, setCurrentTheme, themeMode, setThemeMode } = useThemeStore()
     const activeTheme = appThemes[currentTheme] || appThemes.classic
     const { isDark, aura } = useThemeStyles(themeMode, activeTheme)
 

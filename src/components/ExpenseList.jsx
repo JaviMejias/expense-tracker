@@ -16,6 +16,12 @@ import CategoryBadge from './CategoryBadge'
 import ExpenseListItem from './ExpenseListItem'
 import CustomSelect from './CustomSelect'
 import { useCategoryStyles } from '../hooks/useCategoryStyles'
+import { appThemes } from '../utils/theme'
+import { useNavigate } from 'react-router-dom'
+
+import { useDataStore } from '../store/useDataStore'
+import { useUIStore } from '../store/useUIStore'
+import { useThemeStore } from '../store/useThemeStore'
 
 const sortOptions = [
     { value: 'date-desc', label: '📅 Fecha: Reciente primero' },
@@ -25,7 +31,13 @@ const sortOptions = [
     { value: 'desc-az', label: '🔤 Nombre: A-Z' }
 ]
 
-function ExpenseList({ expenses, handleEdit, handleDelete, handleDuplicateExpenses, currentMonthDate, categories = [], themeMode = 'dark', activeTheme }) {
+function ExpenseList() {
+    const { expenses, deleteExpense, duplicateExpenses, categories } = useDataStore()
+    const { currentMonthDate, setEditingId, setExpenseDate, setDescription, setAmount, setCategory } = useUIStore()
+    const navigate = useNavigate()
+    const { themeMode, currentTheme } = useThemeStore()
+    const activeTheme = appThemes[currentTheme] || appThemes.classic
+
     const { s, isDark, activeColor, textGradientClass, focusRingClass, aura } = useThemeStyles(themeMode, activeTheme)
     const [startDate, setStartDate] = useState(startOfMonth(currentMonthDate))
     const [endDate, setEndDate] = useState(endOfMonth(currentMonthDate))
@@ -37,6 +49,15 @@ function ExpenseList({ expenses, handleEdit, handleDelete, handleDuplicateExpens
     const categoryStyles = useCategoryStyles(categories)
 
     const { filteredExpenses, sortedExpenses } = useExpensesFilter(expenses, startDate, endDate, searchQuery, sortBy, categoryStyles)
+
+    const handleEdit = (expense) => {
+        navigate('/registrar')
+        setEditingId(expense.id)
+        setExpenseDate(parseISO(expense.date))
+        setDescription(expense.description)
+        setAmount(formatCLP(expense.amount))
+        setCategory(expense.category || 'otros')
+    }
 
     const handleToggleSelect = (id) => {
         setSelectedIds(prev =>
@@ -59,7 +80,7 @@ function ExpenseList({ expenses, handleEdit, handleDelete, handleDuplicateExpens
         )
 
         if (result.isConfirmed) {
-            handleDelete(expense.id)
+            deleteExpense(expense.id)
             setSelectedIds(prev => prev.filter(id => id !== expense.id))
             showToast(`Gasto "${expense.description}" eliminado`)
         }
@@ -75,7 +96,7 @@ function ExpenseList({ expenses, handleEdit, handleDelete, handleDuplicateExpens
 
         if (result.isConfirmed) {
             const count = selectedIds.length
-            handleDelete(selectedIds)
+            deleteExpense(selectedIds)
             setSelectedIds([])
             showToast(`${count} ${count === 1 ? 'gasto eliminado' : 'gastos eliminados'} con éxito`)
         }
@@ -93,7 +114,7 @@ function ExpenseList({ expenses, handleEdit, handleDelete, handleDuplicateExpens
 
         if (result.isConfirmed) {
             const count = selectedIds.length
-            handleDuplicateExpenses(selectedIds)
+            duplicateExpenses(selectedIds, currentMonthDate)
             setSelectedIds([])
             showToast(`${count} ${count === 1 ? 'gasto duplicado' : 'gastos duplicados'} con éxito`)
         }

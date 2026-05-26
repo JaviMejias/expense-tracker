@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, differenceInCalendarMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { formatCLP, parseCLP } from '../utils/currency'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlus, faTrash, faCoins, faPiggyBank, faBullseye, faCalendarAlt } from '@fortawesome/free-solid-svg-icons'
-import { colorThemes, getThemeClass } from '../utils/theme'
+import { colorThemes, getThemeClass, appThemes } from '../utils/theme'
 import CustomDatePicker from './CustomDatePicker'
 import CustomButton from './CustomButton'
 import CustomInput from './CustomInput'
@@ -14,24 +14,25 @@ import CircularProgress from './CircularProgress'
 import { useAppAlert } from '../hooks/useAppAlert'
 import EmptyState from './EmptyState'
 import SavingsGoalItem from './SavingsGoalItem'
+import { useDataStore } from '../store/useDataStore'
+import { useThemeStore } from '../store/useThemeStore'
+import { useUIStore } from '../store/useUIStore'
+import { useDerivedData } from '../hooks/useDerivedData'
 
-function SavingsGoals({
-    savingsGoals = [],
-    handleAddSavingsGoal,
-    handleDeleteSavingsGoal,
-    handleContributeToGoal,
-    remainingSalary = 0,
-    onCompleteCelebrate,
-    themeMode = 'dark',
-    activeTheme
-}) {
+function SavingsGoals({ onCompleteCelebrate }) {
+    const { savingsGoals, addSavingsGoal, getSavingsGoalForDeletion, confirmDeleteSavingsGoal, contributeToGoal } = useDataStore()
+    const { themeMode, currentTheme } = useThemeStore()
+    const activeTheme = appThemes[currentTheme] || appThemes.classic
+    const { currentMonthDate } = useUIStore()
+    const { remainingSalary } = useDerivedData()
+
     const [goalTitle, setGoalTitle] = useState('')
     const [goalTarget, setGoalTarget] = useState('')
     const [goalDeadline, setGoalDeadline] = useState('')
     const [goalColor, setGoalColor] = useState('indigo')
 
     const { s, isDark, activeColor, focusRingClass, aura } = useThemeStyles(themeMode, activeTheme)
-    const { showAlert, showToast, showPrompt } = useAppAlert(themeMode)
+    const { showAlert, showToast, showPrompt, showConfirm } = useAppAlert(themeMode)
 
     const totalSaved = savingsGoals.reduce((acc, curr) => acc + curr.currentSaved, 0)
 
@@ -53,20 +54,31 @@ function SavingsGoals({
             return
         }
 
-        const success = handleAddSavingsGoal({
+        addSavingsGoal({
             title: goalTitle,
             targetAmount: targetNum,
             deadline: new Date(goalDeadline).toISOString(),
             color: goalColor
         })
 
-        if (success) {
-            setGoalTitle('')
-            setGoalTarget('')
-            setGoalDeadline('')
-            setGoalColor('indigo')
+        setGoalTitle('')
+        setGoalTarget('')
+        setGoalDeadline('')
+        setGoalColor('indigo')
+        showToast('¡Meta de ahorro creada con éxito!')
+    }
 
-            showToast('¡Meta de ahorro creada con éxito!')
+    const handleDeleteGoal = async (goalId) => {
+        const goal = getSavingsGoalForDeletion(goalId)
+        if (!goal) return
+
+        const confirmed = await showConfirm(
+            '¿Eliminar meta?',
+            `¿Estás seguro de eliminar la meta "${goal.title}"? Los aportes acumulados se perderán.`
+        )
+        if (confirmed.isConfirmed) {
+            confirmDeleteSavingsGoal(goalId)
+            showToast(`Meta "${goal.title}" eliminada`)
         }
     }
 
@@ -104,7 +116,7 @@ function SavingsGoals({
 
         if (amountStr) {
             const numAmount = parseCLP(amountStr)
-            const isCompleted = handleContributeToGoal(goal.id, numAmount)
+            const isCompleted = contributeToGoal(goal.id, numAmount, currentMonthDate)
 
             if (isCompleted) {
                 onCompleteCelebrate()
@@ -119,6 +131,16 @@ function SavingsGoals({
         const val = e.target.value
         setGoalTarget(formatCLP(val))
     }
+
+    // --- Monthly savings suggestion (live, for the creation form) ---
+    const formMonthlySuggestion = (() => {
+        if (!goalTarget || !goalDeadline) return null
+        const targetNum = parseCLP(goalTarget)
+        if (targetNum <= 0) return null
+        const months = differenceInCalendarMonths(new Date(goalDeadline), new Date())
+        if (months <= 0) return null
+        return Math.ceil(targetNum / months)
+    })()
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -160,6 +182,14 @@ function SavingsGoals({
                             const percent = goal.targetAmount > 0 ? (goal.currentSaved / goal.targetAmount) * 100 : 0
                             const theme = colorThemes[goal.color] || colorThemes.rose
 
+                            const remaining = goal.targetAmount - goal.currentSaved
+                            const monthsLeft = goal.deadline
+                                ? Math.max(1, differenceInCalendarMonths(parseISO(goal.deadline), new Date()))
+                                : null
+                            const monthlySuggestion = monthsLeft && remaining > 0
+                                ? Math.ceil(remaining / monthsLeft)
+                                : null
+
                             return (
                                 <SavingsGoalItem
                                     key={goal.id}
@@ -169,8 +199,10 @@ function SavingsGoals({
                                     s={s}
                                     isDark={isDark}
                                     aura={aura}
+                                    monthsLeft={monthsLeft}
+                                    monthlySuggestion={monthlySuggestion}
                                     onContribute={handleContributeClick}
-                                    onDelete={handleDeleteSavingsGoal}
+                                    onDelete={handleDeleteGoal}
                                 />
                             )
                         })}
@@ -221,6 +253,7 @@ function SavingsGoals({
                             s={s}
                             focusRingClass={focusRingClass}
                             placeholderText="Seleccionar..."
+                            fastNavigation={true}
                             className="px-4 py-2.5 rounded-xl text-sm font-bold"
                         />
                     </div>
@@ -233,6 +266,22 @@ function SavingsGoals({
                             isDark={isDark}
                         />
                     </div>
+
+                    {formMonthlySuggestion && (
+                        <div className="sm:col-span-12">
+                            <div className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${isDark ? 'bg-emerald-500/5 border-emerald-500/20' : 'bg-emerald-50 border-emerald-200'}`}>
+                                <span className="text-xl">💡</span>
+                                <div>
+                                    <p className={`text-xs font-black uppercase tracking-widest ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>Sugerencia de Ahorro Mensual</p>
+                                    <p className={`text-sm font-bold mt-0.5 ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
+                                        Para llegar a tu meta, deberías ahorrar aprox.
+                                        <span className={`font-black ${isDark ? 'text-emerald-300' : 'text-emerald-600'}`}> ${formatCLP(formMonthlySuggestion)}/mes </span>
+                                        durante <span className="font-black">{differenceInCalendarMonths(new Date(goalDeadline), new Date())} meses</span>.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="sm:col-span-12 md:col-span-6 flex justify-end">
                         <CustomButton

@@ -14,8 +14,14 @@ import CustomSelect from './CustomSelect'
 import BarChart from './BarChart'
 import StatCard from './StatCard'
 import AdvisorCard from './AdvisorCard'
+import { appThemes } from '../utils/theme'
+import { useDataStore } from '../store/useDataStore'
+import { useThemeStore } from '../store/useThemeStore'
 
-function Analytics({ expenses = [], categories = [], themeMode = 'dark', activeTheme }) {
+function Analytics() {
+    const { expenses, categories } = useDataStore()
+    const { themeMode, currentTheme } = useThemeStore()
+    const activeTheme = appThemes[currentTheme] || appThemes.classic
     const { s, isDark, textGradientClass, aura } = useThemeStyles(themeMode, activeTheme)
 
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())

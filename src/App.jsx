@@ -1,67 +1,44 @@
-import { useState } from 'react'
-import { useExpenseTracker } from './hooks/useExpenseTracker'
+import { useState, Suspense, lazy, useEffect } from 'react'
+import { Routes, Route, NavLink, Navigate } from 'react-router-dom'
+import { ErrorBoundary } from 'react-error-boundary'
 import Header from './components/Header'
-import MonthSummary from './components/MonthSummary'
-import ExpenseForm from './components/ExpenseForm'
-import ExpenseList from './components/ExpenseList'
-import FixedExpenses from './components/FixedExpenses'
 import DataBackup from './components/DataBackup'
-import Analytics from './components/Analytics'
-import CategoryManager from './components/CategoryManager'
-import SavingsGoals from './components/SavingsGoals'
 import Confetti from './components/Confetti'
+import ErrorFallback from './components/ErrorFallback'
+import ReloadPrompt from './components/ReloadPrompt'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faWallet, faListUl, faCalendarCheck, faChartLine, faPiggyBank, faTags, faChartPie } from '@fortawesome/free-solid-svg-icons'
-import { format } from 'date-fns'
+import { faWallet, faListUl, faCalendarCheck, faChartLine, faPiggyBank, faTags, faChartPie, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { appThemes, getThemeClass } from './utils/theme'
+import { useThemeStore } from './store/useThemeStore'
+import { useAppAlert } from './hooks/useAppAlert'
+
+const MonthSummary = lazy(() => import('./components/MonthSummary'))
+const ExpenseForm = lazy(() => import('./components/ExpenseForm'))
+const ExpenseList = lazy(() => import('./components/ExpenseList'))
+const FixedExpenses = lazy(() => import('./components/FixedExpenses'))
+const Analytics = lazy(() => import('./components/Analytics'))
+const CategoryManager = lazy(() => import('./components/CategoryManager'))
+const SavingsGoals = lazy(() => import('./components/SavingsGoals'))
+
+const LoaderFallback = () => (
+  <div className="flex flex-col items-center justify-center p-20 opacity-50 animate-pulse">
+    <FontAwesomeIcon icon={faSpinner} spin className="text-4xl mb-4 text-indigo-500" />
+    <p className="font-bold tracking-widest uppercase text-xs">Cargando módulo...</p>
+  </div>
+)
 
 function App() {
-  const {
-    activeTab,
-    setActiveTab,
-    currentMonthDate,
-    setCurrentMonthDate,
-    expenses,
-    fixedExpenses,
-    setFixedExpenses,
-    categoryLimits,
-    categories,
-    savingsGoals,
-    currentTheme,
-    setCurrentTheme,
-    themeMode,
-    setThemeMode,
-    expenseDate,
-    setExpenseDate,
-    description,
-    setDescription,
-    amount,
-    setAmount,
-    category,
-    setCategory,
-    editingId,
-    errors,
-    currentMonthExpenses,
-    totalExpenses,
-    remainingSalary,
-    displaySalary,
-    handleSalaryChange,
-    handleAmountChange,
-    handleSetCategoryLimit,
-    handleSubmit,
-    handleEdit,
-    handleDelete,
-    handleCancelEdit,
-    handleDuplicateExpenses,
-    applyFixedExpenseToMonth,
-    handleAddCategory,
-    handleDeleteCategory,
-    handleAddSavingsGoal,
-    handleDeleteSavingsGoal,
-    handleContributeToGoal
-  } = useExpenseTracker()
-
+  const { currentTheme, themeMode } = useThemeStore()
   const [confettiTrigger, setConfettiTrigger] = useState(0)
+  const { showToast } = useAppAlert(themeMode)
+
+  useEffect(() => {
+    if (localStorage.getItem('backupImportedFlag')) {
+      showToast('Respaldo cargado correctamente 🎉', 'success', 4000)
+      localStorage.removeItem('backupImportedFlag')
+    }
+  }, [showToast])
+  
   const activeTheme = appThemes[currentTheme] || appThemes.classic
   const isDark = themeMode === 'dark'
   const s = getThemeClass(themeMode)
@@ -146,168 +123,63 @@ function App() {
       }
   `
 
+  const getNavLinkClass = ({ isActive }) => 
+    `flex-1 py-4 font-bold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] flex items-center justify-center gap-2 cursor-pointer select-none ${isActive ? activeTheme.activeTab : (isDark ? activeTheme.inactiveTab : activeTheme.inactiveTabLight)}`
+
   return (
     <div className={`min-h-screen ${!isDark ? 'light-theme' : ''} ${isDark ? 'bg-slate-900 text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200' : 'bg-slate-50 text-slate-800 selection:bg-indigo-500/20 selection:text-indigo-900'} bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] ${isDark ? activeTheme.bgGradient : activeTheme.bgGradientLight} py-8 px-4 sm:px-6 lg:px-8 font-sans transition-all duration-1000`}>
       <style dangerouslySetInnerHTML={{ __html: globalDatePickerStyles }} />
       <div className="w-full space-y-8 animate-fade-in">
-        <Header currentTheme={currentTheme} setCurrentTheme={setCurrentTheme} themeMode={themeMode} setThemeMode={setThemeMode} />
+        <Header />
 
         <div className={`${s.cardBg} rounded-[2rem] shadow-2xl ${isDark ? 'shadow-indigo-900/10' : 'shadow-slate-300/50'} overflow-hidden transition-all duration-500`}>
           <div className={`flex p-3 ${isDark ? 'bg-slate-900/50' : 'bg-slate-100/50'} flex-wrap lg:flex-nowrap gap-2 transition-all duration-500`}>
-            <button
-              onClick={() => setActiveTab('summary')}
-              className={`flex-1 py-4 font-bold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] flex items-center justify-center gap-2 cursor-pointer select-none ${activeTab === 'summary' ? activeTheme.activeTab : (isDark ? activeTheme.inactiveTab : activeTheme.inactiveTabLight)}`}
-            >
+            <NavLink to="/resumen" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faChartPie} /> Resumen
-            </button>
-            <button
-              onClick={() => setActiveTab('dashboard')}
-              className={`flex-1 py-4 font-bold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] flex items-center justify-center gap-2 cursor-pointer select-none ${activeTab === 'dashboard' ? activeTheme.activeTab : (isDark ? activeTheme.inactiveTab : activeTheme.inactiveTabLight)}`}
-            >
+            </NavLink>
+            <NavLink to="/registrar" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faWallet} /> Registrar
-            </button>
-            <button
-              onClick={() => setActiveTab('categorias')}
-              className={`flex-1 py-4 font-bold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] flex items-center justify-center gap-2 cursor-pointer select-none ${activeTab === 'categorias' ? activeTheme.activeTab : (isDark ? activeTheme.inactiveTab : activeTheme.inactiveTabLight)}`}
-            >
+            </NavLink>
+            <NavLink to="/categorias" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faTags} /> Categorías
-            </button>
-            <button
-              onClick={() => setActiveTab('list')}
-              className={`flex-1 py-4 font-bold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] flex items-center justify-center gap-2 cursor-pointer select-none ${activeTab === 'list' ? activeTheme.activeTab : (isDark ? activeTheme.inactiveTab : activeTheme.inactiveTabLight)}`}
-            >
+            </NavLink>
+            <NavLink to="/lista" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faListUl} /> Lista
-            </button>
-            <button
-              onClick={() => setActiveTab('fixed')}
-              className={`flex-1 py-4 font-bold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] flex items-center justify-center gap-2 cursor-pointer select-none ${activeTab === 'fixed' ? activeTheme.activeTab : (isDark ? activeTheme.inactiveTab : activeTheme.inactiveTabLight)}`}
-            >
+            </NavLink>
+            <NavLink to="/fijos" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faCalendarCheck} /> Fijos
-            </button>
-            <button
-              onClick={() => setActiveTab('savings')}
-              className={`flex-1 py-4 font-bold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] flex items-center justify-center gap-2 cursor-pointer select-none ${activeTab === 'savings' ? activeTheme.activeTab : (isDark ? activeTheme.inactiveTab : activeTheme.inactiveTabLight)}`}
-            >
+            </NavLink>
+            <NavLink to="/ahorros" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faPiggyBank} /> Ahorros
-            </button>
-            <button
-              onClick={() => setActiveTab('analytics')}
-              className={`flex-1 py-4 font-bold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] flex items-center justify-center gap-2 cursor-pointer select-none ${activeTab === 'analytics' ? activeTheme.activeTab : (isDark ? activeTheme.inactiveTab : activeTheme.inactiveTabLight)}`}
-            >
+            </NavLink>
+            <NavLink to="/estadisticas" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faChartLine} /> Estadísticas
-            </button>
+            </NavLink>
           </div>
 
-          <div className="p-6 sm:p-8">
-            {activeTab === 'summary' && (
-              <MonthSummary
-                currentMonthDate={currentMonthDate}
-                setCurrentMonthDate={setCurrentMonthDate}
-                displaySalary={displaySalary}
-                handleSalaryChange={handleSalaryChange}
-                errors={errors}
-                totalExpenses={totalExpenses}
-                remainingSalary={remainingSalary}
-                currentMonthExpenses={currentMonthExpenses}
-                categoryLimits={categoryLimits}
-                handleSetCategoryLimit={handleSetCategoryLimit}
-                categories={categories}
-                themeMode={themeMode}
-                activeTheme={activeTheme}
-              />
-            )}
-
-            {activeTab === 'dashboard' && (
-              <div className="space-y-8">
-                <ExpenseForm
-                  editingId={editingId}
-                  expenseDate={expenseDate}
-                  setExpenseDate={setExpenseDate}
-                  description={description}
-                  setDescription={setDescription}
-                  amount={amount}
-                  handleAmountChange={handleAmountChange}
-                  setAmount={setAmount}
-                  errors={errors}
-                  handleSubmit={handleSubmit}
-                  handleCancelEdit={handleCancelEdit}
-                  category={category}
-                  setCategory={setCategory}
-                  categories={categories}
-                  themeMode={themeMode}
-                  activeTheme={activeTheme}
-                />
-              </div>
-            )}
-
-            {activeTab === 'categorias' && (
-              <div className="space-y-8">
-                <CategoryManager
-                  categories={categories}
-                  handleAddCategory={handleAddCategory}
-                  handleDeleteCategory={handleDeleteCategory}
-                  themeMode={themeMode}
-                  activeTheme={activeTheme}
-                />
-              </div>
-            )}
-
-            {activeTab === 'list' && (
-              <ExpenseList
-                key={format(currentMonthDate, 'MM-yyyy')}
-                expenses={expenses}
-                handleEdit={handleEdit}
-                handleDelete={handleDelete}
-                handleDuplicateExpenses={handleDuplicateExpenses}
-                currentMonthDate={currentMonthDate}
-                categories={categories}
-                themeMode={themeMode}
-                activeTheme={activeTheme}
-              />
-            )}
-
-            {activeTab === 'fixed' && (
-              <FixedExpenses
-                fixedExpenses={fixedExpenses}
-                setFixedExpenses={setFixedExpenses}
-                applyFixedExpenseToMonth={applyFixedExpenseToMonth}
-                currentMonthDate={currentMonthDate}
-                setCurrentMonthDate={setCurrentMonthDate}
-                categories={categories}
-                themeMode={themeMode}
-                activeTheme={activeTheme}
-              />
-            )}
-
-            {activeTab === 'savings' && (
-              <SavingsGoals
-                savingsGoals={savingsGoals}
-                handleAddSavingsGoal={handleAddSavingsGoal}
-                handleDeleteSavingsGoal={handleDeleteSavingsGoal}
-                handleContributeToGoal={handleContributeToGoal}
-                remainingSalary={remainingSalary}
-                onCompleteCelebrate={() => setConfettiTrigger(prev => prev + 1)}
-                themeMode={themeMode}
-                activeTheme={activeTheme}
-              />
-            )}
-
-            {activeTab === 'analytics' && (
-              <Analytics
-                expenses={expenses}
-                categories={categories}
-                themeMode={themeMode}
-                activeTheme={activeTheme}
-              />
-            )}
+          <div className="p-6 sm:p-8 min-h-[300px]">
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <Suspense fallback={<LoaderFallback />}>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/resumen" replace />} />
+                  <Route path="/resumen" element={<MonthSummary />} />
+                  <Route path="/registrar" element={<div className="space-y-8"><ExpenseForm /></div>} />
+                  <Route path="/categorias" element={<div className="space-y-8"><CategoryManager /></div>} />
+                  <Route path="/lista" element={<ExpenseList />} />
+                  <Route path="/fijos" element={<FixedExpenses />} />
+                  <Route path="/ahorros" element={<SavingsGoals onCompleteCelebrate={() => setConfettiTrigger(prev => prev + 1)} />} />
+                  <Route path="/estadisticas" element={<Analytics />} />
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </div>
 
-        <DataBackup themeMode={themeMode} />
+        <DataBackup />
       </div>
 
-      {/* Confetti celebration portal */}
       <Confetti trigger={confettiTrigger} />
+      <ReloadPrompt />
     </div>
   )
 }

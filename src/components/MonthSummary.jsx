@@ -5,29 +5,40 @@ import { faCalendarAlt, faMoneyBillWave, faChartPie, faPiggyBank, faCog } from '
 import CustomDatePicker from './CustomDatePicker'
 import CustomInput from './CustomInput'
 import { useThemeStyles } from '../hooks/useThemeStyles'
-import { colorThemes } from '../utils/theme'
+import { colorThemes, appThemes } from '../utils/theme'
 import { useAppAlert } from '../hooks/useAppAlert'
 import ProgressBar from './ProgressBar'
 import BudgetCategoryItem from './BudgetCategoryItem'
 import SummaryCard from './SummaryCard'
 
-function MonthSummary({
-    currentMonthDate,
-    setCurrentMonthDate,
-    displaySalary,
-    handleSalaryChange,
-    errors,
-    totalExpenses,
-    remainingSalary,
-    currentMonthExpenses = [],
-    categoryLimits = {},
-    handleSetCategoryLimit,
-    categories = [],
-    themeMode = 'dark',
-    activeTheme
-}) {
+import { useDataStore } from '../store/useDataStore'
+import { useUIStore } from '../store/useUIStore'
+import { useThemeStore } from '../store/useThemeStore'
+import { useDerivedData } from '../hooks/useDerivedData'
+
+function MonthSummary() {
+    const { categoryLimits, handleSetCategoryLimit, categories, handleSalaryChange: storeHandleSalaryChange } = useDataStore()
+    const { currentMonthDate, setCurrentMonthDate, errors, setErrors } = useUIStore()
+    const { themeMode, currentTheme } = useThemeStore()
+    const activeTheme = appThemes[currentTheme] || appThemes.classic
+    
+    const { currentMonthKey, currentMonthExpenses, totalExpenses, remainingSalary, displaySalary } = useDerivedData()
+
     const { s, isDark, activeColor, textGradientClass, focusRingClass, aura } = useThemeStyles(themeMode, activeTheme)
     const { showToast, showPrompt } = useAppAlert(themeMode)
+
+    const handleSalaryChange = (e) => {
+        const formattedValue = formatCLP(e.target.value)
+        const numericValue = parseCLP(formattedValue)
+
+        storeHandleSalaryChange(currentMonthKey, numericValue)
+
+        if (numericValue <= 0 && formattedValue !== '') {
+            setErrors(prev => ({ ...prev, salary: 'Por favor, ingresa un sueldo válido mayor a cero.' }))
+        } else {
+            setErrors(prev => ({ ...prev, salary: null }))
+        }
+    }
 
     const numericSalary = totalExpenses + remainingSalary
     const percentSpent = numericSalary > 0 ? (totalExpenses / numericSalary) * 100 : 0

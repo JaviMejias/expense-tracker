@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { getThemeClass } from '../utils/theme'
 
 export function useThemeStyles(themeMode = 'dark', activeTheme) {
@@ -18,7 +19,7 @@ export function useThemeStyles(themeMode = 'dark', activeTheme) {
         indigo: 'focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500'
     }[activeColor]
 
-    const auraStylesConfig = {
+    const auraStylesConfig = useMemo(() => ({
         rose: {
             icon: 'text-rose-500',
             label: isDark ? 'text-rose-300 group-hover:text-rose-400' : 'text-rose-600 group-hover:text-rose-700',
@@ -112,7 +113,7 @@ export function useThemeStyles(themeMode = 'dark', activeTheme) {
             listActionBtn: 'bg-indigo-500/15 border-indigo-500/30 text-indigo-400 hover:bg-indigo-600 hover:text-white',
             listClearBtn: isDark ? 'text-indigo-400 hover:text-indigo-300' : 'text-indigo-600 hover:text-indigo-500'
         }
-    }
+    }), [isDark, activeColor])
 
     const aura = auraStylesConfig[activeColor]
 

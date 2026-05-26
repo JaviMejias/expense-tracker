@@ -6,27 +6,47 @@ import { useAppAlert } from '../hooks/useAppAlert'
 import { useThemeStyles } from '../hooks/useThemeStyles'
 import CustomButton from './CustomButton'
 import SectionHeader from './SectionHeader'
+import { useThemeStore } from '../store/useThemeStore'
+import { appThemes } from '../utils/theme'
+import { backupSchema } from '../utils/backupSchema'
 
-function DataBackup({ themeMode = 'dark', activeTheme }) {
+function DataBackup() {
+    const { themeMode, currentTheme } = useThemeStore()
+    const activeTheme = appThemes[currentTheme] || appThemes.classic
     const fileInputRef = useRef(null)
     const { s, isDark, textGradientClass, aura } = useThemeStyles(themeMode, activeTheme)
     const { showAlert } = useAppAlert(themeMode)
 
     const handleExport = () => {
-        const data = localStorage.getItem('expenseTrackerV6')
-        if (!data) return
+        try {
+            const dataStore = JSON.parse(localStorage.getItem('expenseTracker-data'))?.state || {}
+            const themeStore = JSON.parse(localStorage.getItem('expenseTracker-theme'))?.state || {}
+            
+            const combinedData = {
+                salaries: dataStore.salaries,
+                expenses: dataStore.expenses,
+                fixedExpenses: dataStore.fixedExpenses,
+                categoryLimits: dataStore.categoryLimits,
+                categories: dataStore.categories,
+                savingsGoals: dataStore.savingsGoals,
+                currentTheme: themeStore.currentTheme,
+                themeMode: themeStore.themeMode
+            }
 
-        const blob = new Blob([data], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
+            const blob = new Blob([JSON.stringify(combinedData)], { type: 'application/json' })
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
 
-        const dateStr = format(new Date(), 'dd-MM-yyyy_HH-mm')
-        link.download = `Mis_Gastos_Aura_${dateStr}.json`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
+            const dateStr = format(new Date(), 'dd-MM-yyyy_HH-mm')
+            link.download = `Mis_Gastos_Aura_${dateStr}.json`
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(url)
+        } catch (error) {
+            showAlert('Error', 'No se pudo exportar el respaldo.', 'error')
+        }
     }
 
     const handleImport = (e) => {
@@ -37,15 +57,44 @@ function DataBackup({ themeMode = 'dark', activeTheme }) {
         reader.onload = (event) => {
             try {
                 const importedData = JSON.parse(event.target.result)
-                if (importedData.salaries || importedData.expenses) {
-                    localStorage.setItem('expenseTrackerV6', JSON.stringify(importedData))
+                const validation = backupSchema.safeParse(importedData)
+
+                if (validation.success) {
+                    const validData = validation.data
+                    
+                    const dataState = {
+                        salaries: validData.salaries,
+                        expenses: validData.expenses,
+                        fixedExpenses: validData.fixedExpenses,
+                        categoryLimits: validData.categoryLimits,
+                        categories: validData.categories,
+                        savingsGoals: validData.savingsGoals
+                    }
+                    localStorage.setItem('expenseTracker-data', JSON.stringify({ state: dataState, version: 0 }))
+                    
+                    const themeState = {
+                        currentTheme: validData.currentTheme || 'classic',
+                        themeMode: validData.themeMode || 'dark'
+                    }
+                    localStorage.setItem('expenseTracker-theme', JSON.stringify({ state: themeState, version: 0 }))
+                    
                     localStorage.setItem('backupImportedFlag', 'true')
                     window.location.reload()
                 } else {
-                    showAlert('Error de Formato', 'El archivo seleccionado no tiene el formato correcto.', 'error')
+                    // Collect all error messages
+                    const errorMessages = validation.error.errors.map(err => {
+                        const path = err.path.join('.')
+                        return `${path ? `[${path}] ` : ''}${err.message}`
+                    }).join('<br>')
+
+                    showAlert(
+                        'Archivo Inválido o Corrupto',
+                        `El archivo no cumple con el formato requerido. Se encontraron los siguientes errores:<br><br><div style="text-align: left; font-size: 0.85em; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.1); padding: 10px; border-radius: 8px;">${errorMessages}</div>`,
+                        'error'
+                    )
                 }
-            } catch {
-                showAlert('Error al Leer', 'Ocurrió un error al intentar leer el archivo de respaldo.', 'error')
+            } catch (e) {
+                showAlert('Error al Leer', 'Ocurrió un error al intentar leer o procesar el archivo JSON de respaldo.', 'error')
             }
         }
         reader.readAsText(file)
