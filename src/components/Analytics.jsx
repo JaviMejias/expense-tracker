@@ -10,7 +10,7 @@ import { useThemeStyles } from '../hooks/useThemeStyles'
 import EmptyState from './EmptyState'
 import CategoryBadge from './CategoryBadge'
 import TopExpenseItem from './TopExpenseItem'
-import CustomSelect from './CustomSelect'
+import AuraYearSelector from './AuraYearSelector'
 import BarChart from './BarChart'
 import StatCard from './StatCard'
 import AdvisorCard from './AdvisorCard'
@@ -41,7 +41,7 @@ function Analytics() {
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6">
                 <SectionHeader
                     title="Reporte Anual"
                     icon={faChartBar}
@@ -49,14 +49,14 @@ function Analytics() {
                     iconClass={aura.icon}
                     className="!mb-0"
                 />
-                <div className="w-full sm:w-auto flex items-center gap-3">
-                    <label className={`text-xs font-bold ${s.bodyTextMuted} uppercase tracking-wider`}>Año a analizar:</label>
-                    <CustomSelect
+                <div className="w-full xl:w-auto flex flex-col sm:flex-row sm:items-center gap-3">
+                    <label className={`text-xs font-bold ${s.bodyTextMuted} uppercase tracking-wider whitespace-nowrap`}>Año a analizar:</label>
+                    <AuraYearSelector
                         value={selectedYear}
-                        onChange={(e) => setSelectedYear(Number(e.target.value))}
-                        options={availableYears.map(y => ({ value: y, label: y }))}
+                        onChange={setSelectedYear}
+                        years={availableYears}
                         isDark={isDark}
-                        className="!bg-transparent !border-none !p-0 font-black text-lg text-slate-500"
+                        aura={aura}
                     />
                 </div>
             </div>
