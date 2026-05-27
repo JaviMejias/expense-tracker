@@ -7,6 +7,7 @@ export function useThemeStyles(themeMode = 'dark', activeTheme) {
 
     const activeColor = activeTheme?.accentBgColor?.includes('rose') ? 'rose'
         : activeTheme?.accentBgColor?.includes('emerald') ? 'emerald'
+        : activeTheme?.accentBgColor?.includes('pink') ? 'pink'
             : 'indigo'
 
     const textGradientClass = activeTheme
@@ -16,6 +17,7 @@ export function useThemeStyles(themeMode = 'dark', activeTheme) {
     const focusRingClass = {
         rose: 'focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500',
         emerald: 'focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500',
+        pink: 'focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500',
         indigo: 'focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500'
     }[activeColor]
 
@@ -50,6 +52,37 @@ export function useThemeStyles(themeMode = 'dark', activeTheme) {
             listCheckbox: isDark ? 'border-slate-600 bg-slate-900 text-rose-500 focus:ring-rose-500 focus:ring-offset-slate-800' : 'border-slate-300 bg-white text-rose-600 focus:ring-rose-500 focus:ring-offset-white',
             listActionBtn: 'bg-rose-500/15 border-rose-500/30 text-rose-400 hover:bg-rose-600 hover:text-white',
             listClearBtn: isDark ? 'text-rose-400 hover:text-rose-300' : 'text-rose-600 hover:text-rose-500'
+        },
+        pink: {
+            icon: 'text-pink-500',
+            label: isDark ? 'text-pink-300 group-hover:text-pink-400' : 'text-pink-600 group-hover:text-pink-700',
+            bgGlow: 'bg-pink-500/10 blur-[50px]',
+            boxBg: 'bg-pink-500/10 border-pink-500/30 text-pink-400',
+            gradient: isDark ? 'from-fuchsia-950/40 to-slate-900/60 border-pink-500/20 hover:border-pink-500/35' : 'from-fuchsia-50/50 via-white to-slate-100/60 border-pink-200 hover:border-pink-300',
+            chartBar: 'from-fuchsia-600 via-pink-500 to-rose-500 hover:from-fuchsia-400 hover:to-rose-400 shadow-[0_0_15px_rgba(236,72,153,0.2)] hover:shadow-[0_0_20px_rgba(236,72,153,0.4)]',
+            gradientText: 'from-fuchsia-400 to-pink-400',
+            cardHover: 'hover:border-pink-500/20',
+            badge: isDark ? 'bg-pink-500/10 border-pink-500/20 text-pink-300' : 'bg-pink-50 border-pink-200 text-pink-600',
+            radio: isDark ? 'text-pink-500 focus:ring-pink-500 bg-slate-800 border-slate-600' : 'text-pink-600 focus:ring-pink-500 bg-white border-slate-300',
+            radioHover: 'hover:border-pink-500',
+            dayActive: 'bg-pink-500 text-white shadow-md shadow-pink-500/30 border border-pink-400',
+            dayHover: isDark ? 'hover:border-pink-500 hover:text-pink-200' : 'hover:border-pink-500 hover:text-slate-800',
+            hoverItem: 'hover:border-pink-500/50 hover:shadow-md hover:shadow-pink-500/10',
+            dayBadge: isDark ? 'bg-pink-500/10 text-pink-300 border-pink-500/20' : 'bg-pink-50 text-pink-700 border border-pink-100',
+            monthBox: isDark ? 'from-fuchsia-950/40 via-slate-900/80 to-slate-950/60 border-pink-500/20 shadow-pink-950/50 hover:border-pink-500/30' : 'from-fuchsia-50/50 via-white/85 to-slate-100/60 border-pink-200 shadow-pink-100/30 hover:border-pink-300',
+            applyBtn: 'bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white shadow-lg shadow-pink-500/30 border border-pink-400/50 hover:shadow-pink-500/50 hover:border-pink-300',
+            hoverBorder: 'hover:border-pink-500/20 hover:text-pink-400',
+            btn: 'bg-pink-600 hover:bg-pink-500 text-white',
+            container: isDark ? 'bg-slate-950/40 border-pink-500/30 shadow-lg shadow-pink-950/20' : 'bg-white/70 border-pink-200 shadow-lg shadow-pink-100/50',
+            button: isDark ? 'bg-slate-900/60 hover:bg-slate-800 border-slate-700/30 text-slate-300 hover:text-white' : 'bg-white hover:bg-pink-50 border-pink-100 text-slate-600 hover:text-pink-600',
+            text: isDark ? 'text-slate-500' : 'text-slate-500',
+            divider: isDark ? 'bg-slate-800/80' : 'bg-pink-200/60',
+            listSelected: isDark ? 'border-pink-500 bg-pink-950/20 shadow-md shadow-pink-950/30 text-pink-200' : 'border-pink-500 bg-pink-50/50 shadow-md shadow-pink-100/50 text-pink-950',
+            listUnselected: isDark ? 'bg-slate-800/80 border-slate-700 hover:border-pink-500/50 hover:shadow-pink-900/20' : 'bg-white border-slate-200/80 hover:border-pink-500/50 hover:shadow-slate-200/50 text-slate-800',
+            listHoverText: isDark ? 'group-hover:text-pink-300' : 'group-hover:text-pink-600',
+            listCheckbox: isDark ? 'border-slate-600 bg-slate-900 text-pink-500 focus:ring-pink-500 focus:ring-offset-slate-800' : 'border-slate-300 bg-white text-pink-600 focus:ring-pink-500 focus:ring-offset-white',
+            listActionBtn: 'bg-pink-500/15 border-pink-500/30 text-pink-400 hover:bg-pink-600 hover:text-white',
+            listClearBtn: isDark ? 'text-pink-400 hover:text-pink-300' : 'text-pink-600 hover:text-pink-500'
         },
         emerald: {
             icon: 'text-emerald-500',

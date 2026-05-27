@@ -6,6 +6,7 @@ import DataBackup from './components/DataBackup'
 import Confetti from './components/Confetti'
 import ErrorFallback from './components/ErrorFallback'
 import ReloadPrompt from './components/ReloadPrompt'
+import AuraBackground from './components/AuraBackground'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faWallet, faListUl, faCalendarCheck, faChartLine, faPiggyBank, faTags, faChartPie, faSpinner } from '@fortawesome/free-solid-svg-icons'
 import { appThemes, getThemeClass } from './utils/theme'
@@ -21,7 +22,7 @@ const CategoryManager = lazy(() => import('./components/CategoryManager'))
 const SavingsGoals = lazy(() => import('./components/SavingsGoals'))
 
 const LoaderFallback = () => (
-  <div className="flex flex-col items-center justify-center p-20 opacity-50 animate-pulse">
+  <div className="flex flex-col items-center justify-center p-20 opacity-50 animate-pulse relative z-10">
     <FontAwesomeIcon icon={faSpinner} spin className="text-4xl mb-4 text-indigo-500" />
     <p className="font-bold tracking-widest uppercase text-xs">Cargando módulo...</p>
   </div>
@@ -43,9 +44,24 @@ function App() {
   const isDark = themeMode === 'dark'
   const s = getThemeClass(themeMode)
 
-  const activeColor = activeTheme?.accentBgColor?.includes('rose') ? 'rose' : activeTheme?.accentBgColor?.includes('emerald') ? 'emerald' : 'indigo'
-  const auraHex = activeColor === 'rose' ? '#f43f5e' : activeColor === 'emerald' ? '#10b981' : '#6366f1'
-  const auraBgHover = activeColor === 'rose' ? 'rgba(244, 63, 94, 0.15)' : activeColor === 'emerald' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(99, 102, 241, 0.15)'
+  const activeColor = activeTheme?.accentBgColor?.includes('rose') ? 'rose' : activeTheme?.accentBgColor?.includes('emerald') ? 'emerald' : activeTheme?.accentBgColor?.includes('pink') ? 'pink' : 'indigo'
+  
+  const colorMap = {
+    rose: { hex: '#f43f5e', bgHover: 'rgba(244, 63, 94, 0.15)', rgb: '244, 63, 94' },
+    emerald: { hex: '#10b981', bgHover: 'rgba(16, 185, 129, 0.15)', rgb: '16, 185, 129' },
+    pink: { hex: '#ec4899', bgHover: 'rgba(236, 72, 153, 0.15)', rgb: '236, 72, 153' },
+    indigo: { hex: '#6366f1', bgHover: 'rgba(99, 102, 241, 0.15)', rgb: '99, 102, 241' }
+  }
+  
+  const auraHex = colorMap[activeColor].hex
+  const auraBgHover = colorMap[activeColor].bgHover
+  const auraRgb = colorMap[activeColor].rgb
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--aura-color', auraHex)
+    document.documentElement.style.setProperty('--aura-rgb', auraRgb)
+    document.documentElement.style.setProperty('--aura-bg-hover', auraBgHover)
+  }, [auraHex, auraRgb, auraBgHover])
 
   const globalDatePickerStyles = `
       .aura-datepicker-${activeColor} .react-datepicker {
@@ -127,13 +143,14 @@ function App() {
     `flex-1 py-4 font-bold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] flex items-center justify-center gap-2 cursor-pointer select-none ${isActive ? activeTheme.activeTab : (isDark ? activeTheme.inactiveTab : activeTheme.inactiveTabLight)}`
 
   return (
-    <div className={`min-h-screen ${!isDark ? 'light-theme' : ''} ${isDark ? 'bg-slate-900 text-slate-100 selection:bg-indigo-500/30 selection:text-indigo-200' : 'bg-slate-50 text-slate-800 selection:bg-indigo-500/20 selection:text-indigo-900'} bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] ${isDark ? activeTheme.bgGradient : activeTheme.bgGradientLight} py-8 px-4 sm:px-6 lg:px-8 font-sans transition-all duration-1000`}>
+    <div className={`min-h-screen relative ${!isDark ? 'light-theme' : ''} ${isDark ? 'bg-slate-950 text-slate-100 selection:bg-[rgba(var(--aura-rgb),0.3)] selection:text-white' : 'bg-slate-50 text-slate-800 selection:bg-[rgba(var(--aura-rgb),0.2)] selection:text-slate-900'} font-sans transition-all duration-1000`}>
+      <AuraBackground activeColor={activeColor} isDark={isDark} />
       <style dangerouslySetInnerHTML={{ __html: globalDatePickerStyles }} />
-      <div className="w-full space-y-8 animate-fade-in">
+      <div className="w-full relative z-10 space-y-8 animate-fade-in py-8 px-4 sm:px-6 lg:px-8">
         <Header />
 
-        <div className={`${s.cardBg} rounded-[2rem] shadow-2xl ${isDark ? 'shadow-indigo-900/10' : 'shadow-slate-300/50'} overflow-hidden transition-all duration-500`}>
-          <div className={`flex p-3 ${isDark ? 'bg-slate-900/50' : 'bg-slate-100/50'} flex-wrap lg:flex-nowrap gap-2 transition-all duration-500`}>
+        <div className={`${s.cardBg} rounded-[2rem] shadow-[0_0_40px_rgba(var(--aura-rgb),0.1)] hover:shadow-[0_0_60px_rgba(var(--aura-rgb),0.15)] border border-[rgba(var(--aura-rgb),0.2)] overflow-hidden transition-all duration-500`}>
+          <div className={`flex p-3 ${isDark ? 'bg-slate-900/40' : 'bg-white/40'} backdrop-blur-sm border-b border-[rgba(var(--aura-rgb),0.1)] flex-wrap lg:flex-nowrap gap-2 transition-all duration-500`}>
             <NavLink to="/resumen" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faChartPie} /> Resumen
             </NavLink>

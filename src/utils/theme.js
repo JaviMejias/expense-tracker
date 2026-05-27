@@ -32,12 +32,12 @@ export const colorThemes = {
         gradient: 'from-emerald-500 to-teal-600'
     },
     pink: {
-        label: 'Fucsia',
+        label: 'Pink',
         color: 'pink',
         bg: 'border-pink-500/20 text-pink-400 bg-pink-500/5 hover:bg-pink-500/10',
         active: 'bg-pink-500 text-white border-pink-500 shadow-lg shadow-pink-500/30',
         bgClass: 'bg-pink-500/10 border-pink-500/20 text-pink-400',
-        gradient: 'from-pink-500 to-rose-600'
+        gradient: 'from-fuchsia-500 to-pink-500'
     },
     violet: {
         label: 'Violeta',
@@ -121,6 +121,24 @@ export const appThemes = {
         accentBgColor: 'bg-emerald-600',
         accentHoverBgColor: 'hover:bg-emerald-500 shadow-emerald-900/50',
         themeDot: 'bg-emerald-500 ring-emerald-500/40'
+    },
+    aurapink: {
+        id: 'aurapink',
+        label: 'Aura Pink',
+        icon: '🌸',
+        bgGradient: 'from-slate-950 via-pink-950/20 to-slate-950',
+        bgGradientLight: 'from-pink-50/10 via-slate-100/40 to-slate-200/50',
+        textGradient: 'from-fuchsia-400 via-pink-400 to-rose-400',
+        textGradientLight: 'from-fuchsia-600 via-pink-600 to-rose-600',
+        primaryGlow: 'bg-pink-500/20',
+        activeTab: 'bg-pink-500 border-pink-400 shadow-pink-500/30 shadow-lg text-white scale-100',
+        inactiveTab: 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/80 scale-95 border-transparent',
+        inactiveTabLight: 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/60 scale-95 border-transparent',
+        accentBorder: 'border-pink-500/30',
+        accentGlowText: 'text-pink-400',
+        accentBgColor: 'bg-pink-600',
+        accentHoverBgColor: 'hover:bg-pink-500 shadow-pink-900/50',
+        themeDot: 'bg-pink-500 ring-pink-500/40'
     }
 }
 
@@ -133,15 +151,15 @@ export const getThemeClass = (mode) => {
         bodyTextMutedLight: isDark ? 'text-slate-500' : 'text-slate-400',
 
         // Card Containers
-        cardBg: isDark ? 'bg-slate-800/60 backdrop-blur-xl border border-slate-700/50' : 'bg-white/85 backdrop-blur-xl border border-slate-200/80 shadow-xl shadow-slate-200/10',
-        cardBgSolid: isDark ? 'bg-slate-800 border border-slate-700/50' : 'bg-white border border-slate-200 shadow-md shadow-slate-200/10',
+        cardBg: isDark ? 'bg-slate-900/60 backdrop-blur-2xl border-t border-l border-[rgba(var(--aura-rgb),0.2)]' : 'bg-white/80 backdrop-blur-2xl border-t border-l border-[rgba(var(--aura-rgb),0.3)] shadow-xl shadow-[rgba(var(--aura-rgb),0.05)]',
+        cardBgSolid: isDark ? 'bg-slate-900 border border-[rgba(var(--aura-rgb),0.2)] shadow-lg shadow-[rgba(var(--aura-rgb),0.1)]' : 'bg-white border border-[rgba(var(--aura-rgb),0.3)] shadow-lg shadow-[rgba(var(--aura-rgb),0.1)]',
 
         // Inner item blocks
-        itemBg: isDark ? 'bg-slate-900/50 border border-slate-700/50' : 'bg-slate-50 border border-slate-200/50',
-        itemBgHover: isDark ? 'bg-slate-800/80 border border-slate-700 hover:border-indigo-500/50' : 'bg-white border border-slate-200/80 hover:border-indigo-500/50 shadow-sm hover:shadow-md text-slate-800',
+        itemBg: isDark ? 'bg-slate-900/50 border border-slate-800/50 shadow-inner' : 'bg-slate-50/80 border border-slate-200/50 shadow-inner',
+        itemBgHover: isDark ? 'bg-slate-800/80 border border-[rgba(var(--aura-rgb),0.4)] hover:shadow-[0_0_15px_rgba(var(--aura-rgb),0.2)] hover:-translate-y-0.5 transition-all duration-300' : 'bg-white border border-[rgba(var(--aura-rgb),0.4)] hover:shadow-[0_0_15px_rgba(var(--aura-rgb),0.15)] hover:-translate-y-0.5 transition-all duration-300 text-slate-800',
 
         // Inputs
-        input: isDark ? 'bg-slate-900 border border-slate-700 text-slate-100 focus:bg-slate-800 placeholder-slate-600 focus:border-indigo-500' : 'bg-white border border-slate-300 text-slate-800 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/10 focus:outline-none',
+        input: isDark ? 'bg-slate-900/80 border border-[rgba(var(--aura-rgb),0.3)] text-slate-100 focus:bg-slate-800 placeholder-slate-500 focus:border-[var(--aura-color)] focus:shadow-[0_0_10px_rgba(var(--aura-rgb),0.2)] transition-all' : 'bg-white/90 border border-[rgba(var(--aura-rgb),0.3)] text-slate-800 placeholder-slate-400 focus:border-[var(--aura-color)] focus:bg-white focus:ring-4 focus:ring-[rgba(var(--aura-rgb),0.1)] focus:shadow-[0_0_10px_rgba(var(--aura-rgb),0.1)] focus:outline-none transition-all',
 
         // Text headers
         headerText: isDark ? 'text-slate-200' : 'text-slate-800',
