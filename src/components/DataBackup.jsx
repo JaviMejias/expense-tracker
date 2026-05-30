@@ -29,6 +29,8 @@ function DataBackup() {
                 categoryLimits: dataStore.categoryLimits,
                 categories: dataStore.categories,
                 savingsGoals: dataStore.savingsGoals,
+                installments: dataStore.installments,
+                lastSeenMonth: dataStore.lastSeenMonth,
                 currentTheme: themeStore.currentTheme,
                 themeMode: themeStore.themeMode
             }
@@ -68,7 +70,9 @@ function DataBackup() {
                         fixedExpenses: validData.fixedExpenses,
                         categoryLimits: validData.categoryLimits,
                         categories: validData.categories,
-                        savingsGoals: validData.savingsGoals
+                        savingsGoals: validData.savingsGoals,
+                        installments: validData.installments,
+                        lastSeenMonth: validData.lastSeenMonth
                     }
                     localStorage.setItem('expenseTracker-data', JSON.stringify({ state: dataState, version: 0 }))
                     

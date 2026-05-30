@@ -70,5 +70,24 @@ export function useAppAlert(themeMode = 'dark') {
         })
     }
 
-    return { showToast, showConfirm, showAlert, showPrompt }
+    const showThreeWay = (title, text, confirmText, denyText, cancelText) => {
+        return Swal.fire({
+            title,
+            text,
+            icon: 'question',
+            showConfirmButton: true,
+            showDenyButton: true,
+            showCancelButton: true,
+            confirmButtonColor: s.swal.confirmButtonColor,
+            denyButtonColor: isDark ? '#d97706' : '#f59e0b',
+            cancelButtonColor: isDark ? '#475569' : '#94a3b8',
+            confirmButtonText: confirmText,
+            denyButtonText: denyText,
+            cancelButtonText: cancelText,
+            background: s.swal.background,
+            color: s.swal.color,
+        })
+    }
+
+    return { showToast, showConfirm, showAlert, showPrompt, showThreeWay }
 }

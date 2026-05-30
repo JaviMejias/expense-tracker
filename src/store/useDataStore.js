@@ -35,6 +35,9 @@ export const useDataStore = create(
             categoryLimits: getInitialData('categoryLimits', {}),
             categories: getInitialData('categories', defaultCategories),
             savingsGoals: getInitialData('savingsGoals', []),
+            installments: getInitialData('installments', []),
+            lastSeenMonth: getInitialData('lastSeenMonth', null),
+            _hasHydrated: false,
 
             setSalaries: (updater) => set((state) => ({ salaries: typeof updater === 'function' ? updater(state.salaries) : updater })),
             setExpenses: (updater) => set((state) => ({ expenses: typeof updater === 'function' ? updater(state.expenses) : updater })),
@@ -68,11 +71,35 @@ export const useDataStore = create(
                 expenses: state.expenses.map(exp => exp.id === id ? { ...exp, ...updatedExpense } : exp)
             })),
 
+            bulkUpdateExpenseCategory: (ids, newCategoryId) => set((state) => ({
+                expenses: state.expenses.map(exp =>
+                    ids.includes(exp.id) ? { ...exp, category: newCategoryId } : exp
+                )
+            })),
+
             deleteExpense: (idOrIds) => set((state) => {
-                if (Array.isArray(idOrIds)) {
-                    return { expenses: state.expenses.filter(exp => !idOrIds.includes(exp.id)) }
-                } else {
-                    return { expenses: state.expenses.filter(exp => exp.id !== idOrIds) }
+                const idsToDelete = Array.isArray(idOrIds) ? idOrIds : [idOrIds]
+                const expensesToDelete = state.expenses.filter(exp => idsToDelete.includes(exp.id))
+                
+                // Revertir cuotas si el gasto estaba vinculado
+                let newInstallments = state.installments ? [...state.installments] : []
+                expensesToDelete.forEach(exp => {
+                    if (exp.linkedInstallmentId && exp.linkedMonth) {
+                        newInstallments = newInstallments.map(inst => {
+                            if (inst.id === exp.linkedInstallmentId) {
+                                return {
+                                    ...inst,
+                                    appliedMonths: (inst.appliedMonths || []).filter(m => m !== exp.linkedMonth)
+                                }
+                            }
+                            return inst
+                        })
+                    }
+                })
+
+                return { 
+                    expenses: state.expenses.filter(exp => !idsToDelete.includes(exp.id)),
+                    installments: newInstallments
                 }
             }),
 
@@ -134,6 +161,67 @@ export const useDataStore = create(
                 return { expenses: newExpenses, fixedExpenses: newFixedExpenses }
             }),
 
+            setLastSeenMonth: (monthKey) => set({ lastSeenMonth: monthKey }),
+            setHasHydrated: () => set({ _hasHydrated: true }),
+
+            addInstallment: (data) => set((state) => ({
+                installments: [...(state.installments || []), {
+                    id: generateId('inst'),
+                    description: data.description,
+                    totalAmount: data.totalAmount,
+                    hasInterest: data.hasInterest,
+                    monthlyAmount: data.monthlyAmount,
+                    totalInstallments: data.totalInstallments,
+                    purchaseDate: data.purchaseDate,
+                    firstPaymentMonth: data.firstPaymentMonth,
+                    category: data.category || 'otros',
+                    appliedMonths: data.appliedMonths || [],
+                    skippedMonths: [],
+                }]
+            })),
+
+            deleteInstallment: (id) => set((state) => ({
+                installments: (state.installments || []).filter(inst => inst.id !== id)
+            })),
+
+            applyInstallmentToMonth: (id, monthKey) => set((state) => {
+                const inst = (state.installments || []).find(i => i.id === id)
+                if (!inst) return {}
+                const [mm, yyyy] = monthKey.split('-').map(Number)
+                const expenseDate = new Date(yyyy, mm - 1, 1)
+                const [fMM, fYYYY] = inst.firstPaymentMonth.split('-').map(Number)
+                const installmentNum = (yyyy * 12 + mm) - (fYYYY * 12 + fMM) + 1
+                const newExpense = {
+                    id: generateId('exp'),
+                    date: expenseDate.toISOString(),
+                    description: `${inst.description} (cuota ${installmentNum}/${inst.totalInstallments})`,
+                    amount: inst.monthlyAmount,
+                    category: inst.category || 'otros',
+                    linkedInstallmentId: id,
+                    linkedMonth: monthKey
+                }
+                return {
+                    installments: state.installments.map(i =>
+                        i.id === id
+                            ? {
+                                ...i,
+                                appliedMonths: [...i.appliedMonths, monthKey],
+                                skippedMonths: (i.skippedMonths || []).filter(m => m !== monthKey)
+                              }
+                            : i
+                    ),
+                    expenses: [...state.expenses, newExpense]
+                }
+            }),
+
+            skipInstallmentMonth: (id, monthKey) => set((state) => ({
+                installments: (state.installments || []).map(i =>
+                    i.id === id
+                        ? { ...i, skippedMonths: [...(i.skippedMonths || []), monthKey] }
+                        : i
+                )
+            })),
+
             addCategory: (newCat) => {
                 const state = get()
                 const nameLower = newCat.name.trim().toLowerCase()
@@ -152,6 +240,30 @@ export const useDataStore = create(
                 }
 
                 set({ categories: [...state.categories, categoryToAdd] })
+                return { success: true }
+            },
+
+            updateCategory: (catId, updatedFields) => {
+                const state = get()
+                const nameLower = updatedFields.name.trim().toLowerCase()
+                const isDuplicate = state.categories.some(c => c.id !== catId && c.name.toLowerCase() === nameLower)
+                if (isDuplicate) return { success: false, reason: 'duplicate' }
+
+                const theme = colorThemes[updatedFields.color] || colorThemes.slate
+                set((s) => ({
+                    categories: s.categories.map(cat =>
+                        cat.id === catId
+                            ? {
+                                ...cat,
+                                name: updatedFields.name.trim(),
+                                emoji: (updatedFields.emoji || '').trim() || '🏷️',
+                                color: updatedFields.color,
+                                colorClass: theme.bg,
+                                activeClass: theme.active
+                              }
+                            : cat
+                    )
+                }))
                 return { success: true }
             },
 
@@ -241,7 +353,15 @@ export const useDataStore = create(
             }
         }),
         {
-            name: 'expenseTracker-data'
+            name: 'expenseTracker-data',
+            partialize: (state) => {
+                // Excluir _hasHydrated y setHasHydrated de la persistencia (son flags de runtime)
+                const { _hasHydrated, setHasHydrated, ...persisted } = state
+                return persisted
+            },
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated()
+            }
         }
     )
 )

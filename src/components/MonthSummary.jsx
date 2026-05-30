@@ -1,5 +1,4 @@
 import { formatCLP, parseCLP } from '../utils/currency'
-import { es } from 'date-fns/locale'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCalendarAlt, faMoneyBillWave, faChartPie, faPiggyBank, faCog } from '@fortawesome/free-solid-svg-icons'
 import CustomDatePicker from './CustomDatePicker'
@@ -15,6 +14,8 @@ import { useDataStore } from '../store/useDataStore'
 import { useUIStore } from '../store/useUIStore'
 import { useThemeStore } from '../store/useThemeStore'
 import { useDerivedData } from '../hooks/useDerivedData'
+import { format } from 'date-fns'
+import { useMonthTransition } from '../hooks/useMonthTransition'
 
 function MonthSummary() {
     const { categoryLimits, handleSetCategoryLimit, categories, handleSalaryChange: storeHandleSalaryChange } = useDataStore()
@@ -26,6 +27,7 @@ function MonthSummary() {
 
     const { s, isDark, activeColor, textGradientClass, focusRingClass, aura } = useThemeStyles(themeMode, activeTheme)
     const { showToast, showPrompt } = useAppAlert(themeMode)
+    const { handleMonthTransition } = useMonthTransition()
 
     const handleSalaryChange = (e) => {
         const formattedValue = formatCLP(e.target.value)
@@ -37,6 +39,18 @@ function MonthSummary() {
             setErrors(prev => ({ ...prev, salary: 'Por favor, ingresa un sueldo válido mayor a cero.' }))
         } else {
             setErrors(prev => ({ ...prev, salary: null }))
+        }
+    }
+
+    const handleMonthChange = async (newDate) => {
+        const isMovingForward = newDate > currentMonthDate
+        if (isMovingForward) {
+            const prevMonthKey = format(currentMonthDate, 'MM-yyyy')
+            const newMonthKey = format(newDate, 'MM-yyyy')
+            setCurrentMonthDate(newDate)
+            await handleMonthTransition(prevMonthKey, newMonthKey)
+        } else {
+            setCurrentMonthDate(newDate)
         }
     }
 
@@ -110,7 +124,7 @@ function MonthSummary() {
                     </label>
                     <CustomDatePicker
                         selected={currentMonthDate}
-                        onChange={(date) => setCurrentMonthDate(date)}
+                        onChange={handleMonthChange}
                         type="month"
                         activeColor={activeColor}
                         activeTheme={activeTheme}

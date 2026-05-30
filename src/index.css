@@ -46,6 +46,14 @@
   background-clip: padding-box;
 }
 
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 .animation-delay-2000 {
   animation-delay: 2s;
 }

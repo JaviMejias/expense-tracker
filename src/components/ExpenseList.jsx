@@ -3,7 +3,7 @@ import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { formatCLP } from '../utils/currency'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faEdit, faTrash, faSearchDollar, faGhost, faCopy } from '@fortawesome/free-solid-svg-icons'
+import { faEdit, faTrash, faSearchDollar, faGhost, faCopy, faTag } from '@fortawesome/free-solid-svg-icons'
 import SectionHeader from './SectionHeader'
 import { useExpensesFilter } from '../hooks/useExpensesFilter'
 import CustomDatePicker from './CustomDatePicker'
@@ -32,7 +32,7 @@ const sortOptions = [
 ]
 
 function ExpenseList() {
-    const { expenses, deleteExpense, duplicateExpenses, categories } = useDataStore()
+    const { expenses, deleteExpense, duplicateExpenses, bulkUpdateExpenseCategory, categories } = useDataStore()
     const { currentMonthDate, setEditingId, setExpenseDate, setDescription, setAmount, setCategory } = useUIStore()
     const navigate = useNavigate()
     const { themeMode, currentTheme } = useThemeStore()
@@ -44,7 +44,7 @@ function ExpenseList() {
     const [selectedIds, setSelectedIds] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
     const [sortBy, setSortBy] = useState('date-desc')
-    const { showToast, showConfirm } = useAppAlert(themeMode)
+    const { showToast, showConfirm, showPrompt } = useAppAlert(themeMode)
 
     const categoryStyles = useCategoryStyles(categories)
 
@@ -117,6 +117,34 @@ function ExpenseList() {
             duplicateExpenses(selectedIds, currentMonthDate)
             setSelectedIds([])
             showToast(`${count} ${count === 1 ? 'gasto duplicado' : 'gastos duplicados'} con éxito`)
+        }
+    }
+
+    const handleBulkAssignCategory = async () => {
+        if (selectedIds.length === 0) return
+
+        const inputOptions = {}
+        categories.forEach(cat => {
+            inputOptions[cat.id] = `${cat.emoji} ${cat.name}`
+        })
+
+        const result = await showPrompt({
+            title: '🏷️ Asignar Categória',
+            text: `Selecciona la categoría para ${selectedIds.length} ${selectedIds.length === 1 ? 'gasto seleccionado' : 'gastos seleccionados'}:`,
+            input: 'select',
+            inputOptions,
+            inputValue: 'otros',
+            showCancelButton: true,
+            confirmButtonText: 'Asignar',
+            cancelButtonText: 'Cancelar',
+        })
+
+        if (result.isConfirmed && result.value) {
+            const count = selectedIds.length
+            bulkUpdateExpenseCategory(selectedIds, result.value)
+            const catName = categories.find(c => c.id === result.value)?.name || result.value
+            setSelectedIds([])
+            showToast(`${count} ${count === 1 ? 'gasto asignado' : 'gastos asignados'} a "${catName}" ✅`)
         }
     }
 
@@ -229,6 +257,14 @@ function ExpenseList() {
                                 {selectedIds.length} {selectedIds.length === 1 ? 'seleccionado' : 'seleccionados'}
                             </span>
                             <div className="flex gap-2 w-full sm:w-auto">
+                                <CustomButton
+                                    onClick={handleBulkAssignCategory}
+                                    variant="custom"
+                                    icon={faTag}
+                                    className={`flex-1 sm:flex-none py-2.5 px-4 text-sm shadow-md ${aura.listActionBtn}`}
+                                >
+                                    Categoría
+                                </CustomButton>
                                 <CustomButton
                                     onClick={handleBulkDuplicateClick}
                                     variant="custom"

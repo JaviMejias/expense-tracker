@@ -6,6 +6,8 @@ export const expenseSchema = z.object({
     amount: z.number().min(0, 'El monto del gasto debe ser un número positivo'),
     category: z.string().min(1, 'La categoría del gasto no puede estar vacía'),
     date: z.string().datetime({ message: 'La fecha del gasto debe ser un formato ISO válido' }),
+    linkedInstallmentId: z.union([z.string(), z.number()]).optional(),
+    linkedMonth: z.string().optional(),
 })
 
 export const fixedExpenseSchema = z.object({
@@ -36,6 +38,19 @@ export const savingsGoalSchema = z.object({
     color: z.string().default('indigo'),
 })
 
+export const installmentSchema = z.object({
+    id: z.union([z.string(), z.number()]),
+    description: z.string().min(1, 'La descripción de la cuota no puede estar vacía'),
+    totalAmount: z.number().min(0),
+    hasInterest: z.boolean().default(false),
+    monthlyAmount: z.number().min(0),
+    totalInstallments: z.number().min(1),
+    firstPaymentMonth: z.string(),
+    category: z.string().default('otros'),
+    appliedMonths: z.array(z.string()).default([]),
+    skippedMonths: z.array(z.string()).default([]),
+})
+
 export const backupSchema = z.object({
     salaries: z.record(z.string(), z.number()).default({}),
     expenses: z.array(expenseSchema).default([]),
@@ -43,6 +58,8 @@ export const backupSchema = z.object({
     categoryLimits: z.record(z.string(), z.number()).default({}),
     categories: z.array(categorySchema).min(1, 'El respaldo debe contener al menos las categorías por defecto'),
     savingsGoals: z.array(savingsGoalSchema).default([]),
+    installments: z.array(installmentSchema).default([]),
+    lastSeenMonth: z.string().nullable().optional(),
     currentTheme: z.string().optional(),
     themeMode: z.enum(['dark', 'light']).optional()
 })

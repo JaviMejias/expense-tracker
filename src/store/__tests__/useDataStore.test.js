@@ -7,6 +7,7 @@ describe('useDataStore', () => {
     useDataStore.setState({
       expenses: [],
       salaries: {},
+      installments: [],
       categories: [
         { id: '1', name: 'comida', color: 'bg-emerald-500' },
         { id: '2', name: 'transporte', color: 'bg-blue-500' }
@@ -97,5 +98,84 @@ describe('useDataStore', () => {
     const result = store.addCategory({ name: 'comida-duplicada', color: 'rose', emoji: '🍔' })
     expect(result.success).toBe(false)
     expect(result.reason).toBe('duplicate')
+  })
+
+  it('should add an installment correctly', () => {
+    const store = useDataStore.getState()
+    expect(store.installments.length).toBe(0)
+
+    store.addInstallment({
+      id: 'inst_1',
+      description: 'Laptop',
+      totalAmount: 1000000,
+      hasInterest: false,
+      monthlyAmount: 100000,
+      totalInstallments: 10,
+      firstPaymentMonth: '05-2023',
+      category: 'otros',
+      appliedMonths: [],
+      skippedMonths: []
+    })
+
+    const updatedStore = useDataStore.getState()
+    expect(updatedStore.installments.length).toBe(1)
+    expect(updatedStore.installments[0].description).toBe('Laptop')
+  })
+
+  it('should apply an installment to a month and link the expense', () => {
+    useDataStore.getState().addInstallment({
+      description: 'Laptop',
+      totalAmount: 1000000,
+      hasInterest: false,
+      monthlyAmount: 100000,
+      totalInstallments: 10,
+      firstPaymentMonth: '05-2023',
+      category: 'otros',
+      appliedMonths: [],
+      skippedMonths: []
+    })
+
+    const store = useDataStore.getState()
+    const instId = store.installments[0].id
+    store.applyInstallmentToMonth(instId, '06-2023')
+
+    const stateWithExpense = useDataStore.getState()
+    expect(stateWithExpense.installments[0].appliedMonths).toContain('06-2023')
+    
+    // Check linked expense
+    expect(stateWithExpense.expenses.length).toBe(1)
+    const expense = stateWithExpense.expenses[0]
+    expect(expense.linkedInstallmentId).toBe(instId)
+    expect(expense.linkedMonth).toBe('06-2023')
+  })
+
+  it('should unlink the installment if the linked expense is deleted', () => {
+    useDataStore.getState().addInstallment({
+      description: 'Phone',
+      totalAmount: 500000,
+      hasInterest: false,
+      monthlyAmount: 50000,
+      totalInstallments: 10,
+      firstPaymentMonth: '05-2023',
+      category: 'otros',
+      appliedMonths: [],
+      skippedMonths: []
+    })
+
+    let store = useDataStore.getState()
+    const instId = store.installments[0].id
+    store.applyInstallmentToMonth(instId, '06-2023')
+
+    store = useDataStore.getState()
+    expect(store.installments[0].appliedMonths).toContain('06-2023')
+    const expenseId = store.expenses[0].id
+
+    // Delete the expense
+    store.deleteExpense(expenseId)
+
+    const finalState = useDataStore.getState()
+    expect(finalState.expenses.length).toBe(0)
+    // The installment should be un-applied
+    expect(finalState.installments[0].appliedMonths).not.toContain('06-2023')
   })
 })

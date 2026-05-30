@@ -36,6 +36,6 @@ export default defineConfig({
     allowedHosts: true
   },
   test: {
-    environment: 'jsdom'
+    environment: 'happy-dom'
   }
 })

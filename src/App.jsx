@@ -1,5 +1,5 @@
-import { useState, Suspense, lazy, useEffect } from 'react'
-import { Routes, Route, NavLink, Navigate } from 'react-router-dom'
+import { useState, Suspense, lazy, useEffect, useRef } from 'react'
+import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
 import { ErrorBoundary } from 'react-error-boundary'
 import Header from './components/Header'
 import DataBackup from './components/DataBackup'
@@ -8,15 +8,20 @@ import ErrorFallback from './components/ErrorFallback'
 import ReloadPrompt from './components/ReloadPrompt'
 import AuraBackground from './components/AuraBackground'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faWallet, faListUl, faCalendarCheck, faChartLine, faPiggyBank, faTags, faChartPie, faSpinner } from '@fortawesome/free-solid-svg-icons'
+import { faWallet, faListUl, faCalendarCheck, faChartLine, faPiggyBank, faTags, faChartPie, faSpinner, faCreditCard } from '@fortawesome/free-solid-svg-icons'
 import { appThemes, getThemeClass } from './utils/theme'
 import { useThemeStore } from './store/useThemeStore'
 import { useAppAlert } from './hooks/useAppAlert'
+import { format } from 'date-fns'
+import { useDataStore } from './store/useDataStore'
+import { useMonthTransition } from './hooks/useMonthTransition'
 
 const MonthSummary = lazy(() => import('./components/MonthSummary'))
 const ExpenseForm = lazy(() => import('./components/ExpenseForm'))
 const ExpenseList = lazy(() => import('./components/ExpenseList'))
 const FixedExpenses = lazy(() => import('./components/FixedExpenses'))
+const Installments = lazy(() => import('./components/Installments'))
+const MobileNav = lazy(() => import('./components/MobileNav'))
 const Analytics = lazy(() => import('./components/Analytics'))
 const CategoryManager = lazy(() => import('./components/CategoryManager'))
 const SavingsGoals = lazy(() => import('./components/SavingsGoals'))
@@ -32,6 +37,16 @@ function App() {
   const { currentTheme, themeMode } = useThemeStore()
   const [confettiTrigger, setConfettiTrigger] = useState(0)
   const { showToast } = useAppAlert(themeMode)
+  const { lastSeenMonth, setLastSeenMonth, _hasHydrated } = useDataStore()
+  const { handleMonthTransition } = useMonthTransition()
+  const startupCheckDone = useRef(false)
+  const location = useLocation()
+
+  useEffect(() => {
+    if (location.pathname !== '/') {
+      localStorage.setItem('lastTab', location.pathname)
+    }
+  }, [location.pathname])
 
   useEffect(() => {
     if (localStorage.getItem('backupImportedFlag')) {
@@ -62,6 +77,20 @@ function App() {
     document.documentElement.style.setProperty('--aura-rgb', auraRgb)
     document.documentElement.style.setProperty('--aura-bg-hover', auraBgHover)
   }, [auraHex, auraRgb, auraBgHover])
+
+  // Detección automática de cambio de mes al abrir la app
+  // Solo corre una vez cuando el store de Zustand termina de hidratarse desde localStorage
+  useEffect(() => {
+    if (!_hasHydrated || startupCheckDone.current) return
+    startupCheckDone.current = true
+    const currentMonthKey = format(new Date(), 'MM-yyyy')
+    if (lastSeenMonth && lastSeenMonth !== currentMonthKey) {
+      setLastSeenMonth(currentMonthKey)
+      handleMonthTransition(lastSeenMonth, currentMonthKey)
+    } else {
+      setLastSeenMonth(currentMonthKey)
+    }
+  }, [_hasHydrated])
 
   const globalDatePickerStyles = `
       .aura-datepicker-${activeColor} .react-datepicker {
@@ -140,7 +169,7 @@ function App() {
   `
 
   const getNavLinkClass = ({ isActive }) => 
-    `flex-1 py-4 font-bold text-sm sm:text-base rounded-2xl transition-all duration-300 min-w-[120px] flex items-center justify-center gap-2 cursor-pointer select-none ${isActive ? activeTheme.activeTab : (isDark ? activeTheme.inactiveTab : activeTheme.inactiveTabLight)}`
+    `md:flex-1 flex-shrink-0 py-4 font-bold text-sm sm:text-base rounded-2xl transition-all duration-300 px-3 lg:px-5 flex items-center justify-center gap-2 cursor-pointer select-none ${isActive ? activeTheme.activeTab : (isDark ? activeTheme.inactiveTab : activeTheme.inactiveTabLight)}`
 
   return (
     <div className={`min-h-screen relative ${!isDark ? 'light-theme' : ''} ${isDark ? 'bg-slate-950 text-slate-100 selection:bg-[rgba(var(--aura-rgb),0.3)] selection:text-white' : 'bg-slate-50 text-slate-800 selection:bg-[rgba(var(--aura-rgb),0.2)] selection:text-slate-900'} font-sans transition-all duration-1000`}>
@@ -150,18 +179,22 @@ function App() {
         <Header />
 
         <div className={`${s.cardBg} rounded-[2rem] shadow-[0_0_40px_rgba(var(--aura-rgb),0.1)] hover:shadow-[0_0_60px_rgba(var(--aura-rgb),0.15)] border border-[rgba(var(--aura-rgb),0.2)] overflow-hidden transition-all duration-500`}>
-          <div className={`flex p-3 ${isDark ? 'bg-slate-900/40' : 'bg-white/40'} backdrop-blur-sm border-b border-[rgba(var(--aura-rgb),0.1)] flex-wrap lg:flex-nowrap gap-2 transition-all duration-500`}>
+          {/* Navegación Desktop */}
+          <div className={`hidden md:flex p-3 ${isDark ? 'bg-slate-900/40' : 'bg-white/40'} backdrop-blur-sm border-b border-[rgba(var(--aura-rgb),0.1)] flex-wrap lg:flex-nowrap gap-2 w-full transition-all duration-500`}>
             <NavLink to="/resumen" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faChartPie} /> Resumen
-            </NavLink>
-            <NavLink to="/registrar" className={getNavLinkClass}>
-              <FontAwesomeIcon icon={faWallet} /> Registrar
             </NavLink>
             <NavLink to="/categorias" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faTags} /> Categorías
             </NavLink>
+            <NavLink to="/registrar" className={getNavLinkClass}>
+              <FontAwesomeIcon icon={faWallet} /> Registrar
+            </NavLink>
             <NavLink to="/lista" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faListUl} /> Lista
+            </NavLink>
+            <NavLink to="/cuotas" className={getNavLinkClass}>
+              <FontAwesomeIcon icon={faCreditCard} /> Cuotas
             </NavLink>
             <NavLink to="/fijos" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faCalendarCheck} /> Fijos
@@ -174,15 +207,23 @@ function App() {
             </NavLink>
           </div>
 
+          {/* Navegación Mobile (Dropdown) */}
+          <div className="md:hidden p-4 border-b border-[rgba(var(--aura-rgb),0.1)]">
+            <Suspense fallback={<div className="h-14 bg-slate-200 dark:bg-slate-800 rounded-2xl animate-pulse"></div>}>
+              <MobileNav />
+            </Suspense>
+          </div>
+
           <div className="p-6 sm:p-8 min-h-[300px]">
             <ErrorBoundary FallbackComponent={ErrorFallback}>
               <Suspense fallback={<LoaderFallback />}>
                 <Routes>
-                  <Route path="/" element={<Navigate to="/resumen" replace />} />
+                  <Route path="/" element={<Navigate to={localStorage.getItem('lastTab') || '/resumen'} replace />} />
                   <Route path="/resumen" element={<MonthSummary />} />
                   <Route path="/registrar" element={<div className="space-y-8"><ExpenseForm /></div>} />
                   <Route path="/categorias" element={<div className="space-y-8"><CategoryManager /></div>} />
                   <Route path="/lista" element={<ExpenseList />} />
+                  <Route path="/cuotas" element={<Installments />} />
                   <Route path="/fijos" element={<FixedExpenses />} />
                   <Route path="/ahorros" element={<SavingsGoals onCompleteCelebrate={() => setConfettiTrigger(prev => prev + 1)} />} />
                   <Route path="/estadisticas" element={<Analytics />} />
