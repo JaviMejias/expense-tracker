@@ -112,7 +112,7 @@ function InstallmentItem({ inst, currentMonthKey, categoryStyle, s, aura, isDark
                     Cuota {installmentNum}/{inst.totalInstallments} registrada en {currentMonthName}
                 </div>
             ) : isSkipped ? (
-                <div className="flex gap-2 flex-wrap">
+                <div className="flex flex-col sm:flex-row gap-2">
                     <div className={`flex-1 text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-2
                         ${isDark ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-amber-50 text-amber-600 border border-amber-200'}`}>
                         ⏭️ Saltada en {currentMonthName}
@@ -126,7 +126,7 @@ function InstallmentItem({ inst, currentMonthKey, categoryStyle, s, aura, isDark
                     </button>
                 </div>
             ) : (
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                     <button
                         onClick={() => onApply(inst.id, currentMonthKey)}
                         className={`flex-1 text-xs font-bold px-3 py-2.5 rounded-xl border transition-all cursor-pointer

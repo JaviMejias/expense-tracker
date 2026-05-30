@@ -21,11 +21,33 @@ export function useAppAlert(themeMode = 'dark') {
         })
     }
 
-    const showConfirm = (title, text, confirmText = 'Sí, eliminar', isDanger = true) => {
+    const showUpdateToast = (title) => {
+        return Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: undefined,
+            title,
+            showConfirmButton: true,
+            confirmButtonText: 'Ver detalles',
+            showCancelButton: true,
+            cancelButtonText: 'Más tarde',
+            timer: 8000, 
+            timerProgressBar: true,
+            background: s.swal.background,
+            color: s.swal.color,
+            confirmButtonColor: '#3b82f6',
+            cancelButtonColor: isDark ? '#475569' : '#e2e8f0',
+            customClass: {
+                popup: 'shadow-lg border border-[rgba(var(--aura-rgb),0.2)]'
+            }
+        })
+    }
+
+    const showConfirm = (title, text, confirmText = 'Sí, eliminar', isDanger = true, useHtml = false, customIcon = null) => {
         return Swal.fire({
             title,
-            text,
-            icon: isDanger ? 'warning' : 'question',
+            [useHtml ? 'html' : 'text']: text,
+            icon: customIcon || (isDanger ? 'warning' : 'info'),
             showCancelButton: true,
             confirmButtonColor: isDanger ? '#f43f5e' : s.swal.confirmButtonColor,
             cancelButtonColor: isDanger ? s.swal.confirmButtonColor : (isDark ? '#475569' : '#e2e8f0'),
@@ -89,5 +111,5 @@ export function useAppAlert(themeMode = 'dark') {
         })
     }
 
-    return { showToast, showConfirm, showAlert, showPrompt, showThreeWay }
+    return { showToast, showUpdateToast, showConfirm, showAlert, showPrompt, showThreeWay }
 }

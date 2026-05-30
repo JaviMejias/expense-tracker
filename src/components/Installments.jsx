@@ -159,7 +159,7 @@ function Installments() {
 
             {/* === Compras en Cuotas === */}
             <div>
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                     <h2 className={`text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r ${textGradientClass} flex items-center gap-2`}>
                         <FontAwesomeIcon icon={faCreditCard} className={aura.icon} /> Compras en Cuotas
                         {pendingCount > 0 && (
@@ -197,7 +197,7 @@ function Installments() {
 
                             <div>
                                 <label className={`block text-sm font-bold ${aura.label} mb-2`}>¿La cuota tiene interés?</label>
-                                <div className="flex gap-3">
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                                     <label className={`flex items-center gap-2 cursor-pointer px-4 py-3 rounded-xl border transition-all flex-1 select-none
                                         ${!instHasInterest
                                             ? (isDark ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300' : 'bg-indigo-50 border-indigo-300 text-indigo-700')
@@ -234,7 +234,7 @@ function Installments() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                             <div>
                                 <label className={`block text-sm font-bold ${aura.label} mb-2`}>Número de cuotas:</label>
-                                <div className="flex gap-2">
+                                <div className="flex flex-col sm:flex-row gap-3">
                                     <div className="flex-1 relative">
                                         <CustomInput value={instNInstallments} onChange={(e) => setInstNInstallments(e.target.value.replace(/\D/g, ''))} placeholder="Totales (Ej: 6)" s={s} focusRingClass={focusRingClass} className="py-3 rounded-xl font-bold" />
                                         <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Total</span>
@@ -271,7 +271,7 @@ function Installments() {
                             <CategorySelector categories={categories} selectedId={instCategory} onSelect={setInstCategory} isDark={isDark} focusRingClass={focusRingClass} hoverClass={aura.hoverItem} />
                         </div>
 
-                        <div className="flex gap-3">
+                        <div className="flex flex-col sm:flex-row gap-3">
                             <CustomButton type="submit" variant="primary" icon={faSave} className="flex-1 py-3" activeTheme={activeTheme} isDark={isDark}>
                                 Guardar Cuota
                             </CustomButton>

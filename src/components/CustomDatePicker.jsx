@@ -2,6 +2,21 @@ import DatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
 import { es } from 'date-fns/locale'
 import { getMonth, getYear } from 'date-fns'
+import { forwardRef } from 'react'
+
+const DatePickerInput = forwardRef(({ value, onClick, placeholder, className }, ref) => (
+    <input
+        type="text"
+        value={value}
+        onClick={onClick}
+        onChange={() => {}} 
+        readOnly={true} 
+        inputMode="none" 
+        ref={ref}
+        placeholder={placeholder}
+        className={className}
+    />
+))
 
 function CustomDatePicker({
     selected,
@@ -31,11 +46,13 @@ function CustomDatePicker({
             dateFormat={finalDateFormat}
             showMonthYearPicker={isMonth}
             locale={es}
-            calendarClassName={`aura-datepicker-${activeColor}`}
+            calendarClassName={`aura-datepicker-${activeColor} z-[9999]`}
             wrapperClassName={wrapperClassName}
             placeholderText={placeholderText}
+            customInput={<DatePickerInput />}
             minDate={minDate}
             maxDate={maxDate}
+            portalId="root"
             {...(fastNavigation && {
                 renderCustomHeader: ({
                     date,
