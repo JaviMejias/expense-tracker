@@ -10,8 +10,8 @@ function SummaryCard({ title, value, icon, isDark, className = '', titleClass = 
     const isNegative = typeof value === 'string' && value.startsWith('-$')
 
     return (
-        <div className={`group p-5 rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${className}`}>
-            <div className="flex items-center gap-3 mb-3">
+        <div className={`group p-5 rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex flex-col items-center justify-center text-center ${className}`}>
+            <div className="flex items-center justify-center gap-3 mb-3">
                 {typeof icon === 'string' ? (
                     <span className={`text-lg font-black opacity-60 ${titleClass}`}>{icon}</span>
                 ) : (
