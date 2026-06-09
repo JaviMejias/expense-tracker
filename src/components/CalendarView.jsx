@@ -77,14 +77,14 @@ function CalendarView() {
                 <div
                     key={day}
                     onClick={() => handleDayClick(cloneDay)}
-                    className={`min-h-[60px] sm:min-h-[80px] p-1 sm:p-2 border transition-all cursor-pointer relative flex flex-col items-center sm:items-start ${
+                    className={`min-h-[60px] sm:min-h-[80px] p-1 sm:p-2 transition-all cursor-pointer relative flex flex-col items-center sm:items-start ${
                         !isSameMonth(day, monthStart)
-                            ? (isDark ? 'bg-slate-900/20 text-slate-600 border-slate-800/50' : 'bg-slate-50 text-slate-300 border-slate-100')
+                            ? (isDark ? 'bg-slate-900/20 text-slate-600' : 'bg-slate-50 text-slate-300')
                             : (isSameDay(day, selectedDate)
-                                ? `${aura.primaryGlow} ${aura.accentBorder} text-[var(--aura-color)]`
+                                ? `${aura.primaryGlow} bg-slate-900/40 text-[var(--aura-color)] ring-inset ring-2 ring-[var(--aura-color)]`
                                 : isSameDay(day, new Date()) 
-                                    ? `bg-[var(--aura-bg-hover)] border-[var(--aura-color)] text-[var(--aura-color)] font-bold` 
-                                    : (isDark ? 'bg-slate-800/50 text-slate-300 border-slate-700/50 hover:bg-slate-700/50' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'))
+                                    ? `bg-[var(--aura-bg-hover)] text-[var(--aura-color)] font-bold ring-inset ring-2 ring-[var(--aura-color)]` 
+                                    : (isDark ? 'bg-slate-800/20 text-slate-300 hover:bg-slate-700/50' : 'bg-white text-slate-700 hover:bg-slate-50'))
                     }`}
                 >
                     <div className="flex justify-between items-start w-full">
@@ -109,7 +109,7 @@ function CalendarView() {
             day = addDays(day, 1)
         }
         rows.push(
-            <div className="grid grid-cols-7 min-w-full flex-shrink-0 snap-center" key={day}>
+            <div className="grid grid-cols-7 min-w-full flex-shrink-0 snap-center divide-x divide-slate-200 dark:divide-slate-800/50" key={day}>
                 {days}
             </div>
         )
@@ -150,8 +150,8 @@ function CalendarView() {
                         </div>
 
                         {/* Calendar Grid */}
-                        <div className="border-t border-l rounded-xl overflow-hidden border-slate-200 dark:border-slate-800">
-                            <div className="flex sm:flex-col overflow-x-auto snap-x snap-mandatory sm:snap-none hide-scrollbar w-full">
+                        <div className="border rounded-xl overflow-hidden border-slate-200 dark:border-slate-800/50">
+                            <div className="flex sm:flex-col overflow-x-auto snap-x snap-mandatory sm:snap-none hide-scrollbar w-full divide-x sm:divide-x-0 sm:divide-y divide-slate-200 dark:divide-slate-800/50">
                                 {rows}
                             </div>
                         </div>
