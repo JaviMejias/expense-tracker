@@ -1,6 +1,6 @@
 import { formatCLP, parseCLP } from '../utils/currency'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCalendarAlt, faMoneyBillWave, faChartPie, faPiggyBank, faCog, faHandshake } from '@fortawesome/free-solid-svg-icons'
+import { faCalendarAlt, faMoneyBillWave, faChartPie, faPiggyBank, faCog, faHandshake, faHistory, faWallet, faPlus, faEquals } from '@fortawesome/free-solid-svg-icons'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import CustomDatePicker from './CustomDatePicker'
 import CustomInput from './CustomInput'
@@ -168,26 +168,47 @@ function MonthSummary() {
                 </div>
             ) : (
                 <>
-                    <div className={`border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200'} pt-8 mb-6`}>
-                        <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0 px-4 sm:px-8 py-4 sm:py-6 rounded-2xl bg-gradient-to-r ${isDark ? 'from-slate-800/40 to-slate-800/10' : 'from-slate-100 to-white'} border ${isDark ? 'border-slate-700/50' : 'border-slate-200'}`}>
-                            <div className="text-center">
-                                <p className={`text-[10px] sm:text-xs uppercase font-black tracking-wider ${s.bodyTextMuted} mb-1`}>Saldo Anterior</p>
-                                <p className={`text-sm sm:text-lg font-bold ${previousBalance >= 0 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-rose-400' : 'text-rose-600')}`}>
+                    <div className="mb-6">
+                        <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 p-5 sm:p-6 rounded-3xl bg-gradient-to-br ${isDark ? 'from-slate-800/80 to-slate-900/80' : 'from-slate-50 to-slate-100/50'} border ${isDark ? 'border-slate-700/50' : 'border-slate-200'} shadow-sm`}>
+                            
+                            {/* Saldo Anterior */}
+                            <div className={`flex flex-col items-center flex-1 w-full py-4 px-2 rounded-2xl transition-all ${isDark ? 'bg-slate-800/50 border border-slate-700' : 'bg-white border border-slate-200 shadow-sm hover:shadow-md'}`}>
+                                <FontAwesomeIcon icon={faHistory} className={`text-xl sm:text-2xl mb-2 sm:mb-3 ${isDark ? 'text-slate-400' : 'text-slate-400'}`} />
+                                <p className={`text-[10px] uppercase font-black tracking-widest ${s.bodyTextMuted} mb-1 text-center`}>Saldo Anterior</p>
+                                <p className={`text-lg sm:text-xl font-black tabular-nums ${previousBalance >= 0 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-rose-400' : 'text-rose-600')}`}>
                                     {previousBalance < 0 ? '-' : ''}${formatCLP(Math.abs(previousBalance))}
                                 </p>
                             </div>
-                            <div className={`text-xl font-black ${s.bodyTextMuted}`}>+</div>
-                            <div className="text-center">
-                                <p className={`text-[10px] sm:text-xs uppercase font-black tracking-wider ${s.bodyTextMuted} mb-1`}>Sueldo del Mes</p>
-                                <p className={`text-sm sm:text-lg font-bold ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>${formatCLP(currentSalary)}</p>
+
+                            {/* + Icon */}
+                            <div className={`w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-white text-slate-400 shadow-sm border border-slate-100'}`}>
+                                <FontAwesomeIcon icon={faPlus} className="text-xs" />
                             </div>
-                            <div className={`text-xl font-black ${s.bodyTextMuted}`}>=</div>
-                            <div className="text-center">
-                                <p className={`text-[10px] sm:text-xs uppercase font-black tracking-wider ${s.bodyTextMuted} mb-1`}>Presupuesto Base</p>
-                                <p className={`text-base sm:text-xl font-black ${totalAvailable >= 0 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-rose-400' : 'text-rose-600')}`}>
+
+                            {/* Sueldo del Mes */}
+                            <div className={`flex flex-col items-center flex-1 w-full py-4 px-2 rounded-2xl transition-all ${isDark ? 'bg-slate-800/50 border border-slate-700' : 'bg-white border border-slate-200 shadow-sm hover:shadow-md'}`}>
+                                <FontAwesomeIcon icon={faMoneyBillWave} className={`text-xl sm:text-2xl mb-2 sm:mb-3 ${isDark ? 'text-emerald-400/70' : 'text-emerald-500/70'}`} />
+                                <p className={`text-[10px] uppercase font-black tracking-widest ${s.bodyTextMuted} mb-1 text-center`}>Sueldo del Mes</p>
+                                <p className={`text-lg sm:text-xl font-black tabular-nums ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                                    ${formatCLP(currentSalary)}
+                                </p>
+                            </div>
+
+                            {/* = Icon */}
+                            <div className={`w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-white text-slate-400 shadow-sm border border-slate-100'}`}>
+                                <FontAwesomeIcon icon={faEquals} className="text-xs" />
+                            </div>
+
+                            {/* Presupuesto Base */}
+                            <div className={`flex flex-col items-center flex-1 w-full py-5 px-2 rounded-2xl border transition-all ${isDark ? 'bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border-indigo-500/30' : 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200/50 shadow-md hover:shadow-lg'} relative overflow-hidden group`}>
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                                <FontAwesomeIcon icon={faWallet} className={`text-xl sm:text-2xl mb-2 sm:mb-3 ${isDark ? 'text-indigo-400' : 'text-indigo-500'}`} />
+                                <p className={`text-[10px] sm:text-xs uppercase font-black tracking-widest ${isDark ? 'text-indigo-300' : 'text-indigo-800'} mb-1 text-center`}>Presupuesto Base</p>
+                                <p className={`text-xl sm:text-2xl font-black tabular-nums ${totalAvailable >= 0 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-rose-400' : 'text-rose-600')}`}>
                                     {totalAvailable < 0 ? '-' : ''}${formatCLP(Math.abs(totalAvailable))}
                                 </p>
                             </div>
+
                         </div>
                     </div>
 
