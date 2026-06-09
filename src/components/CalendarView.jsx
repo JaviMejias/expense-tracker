@@ -109,7 +109,7 @@ function CalendarView() {
             day = addDays(day, 1)
         }
         rows.push(
-            <div className="grid grid-cols-7" key={day}>
+            <div className="grid grid-cols-7 min-w-full flex-shrink-0 snap-center" key={day}>
                 {days}
             </div>
         )
@@ -150,10 +150,17 @@ function CalendarView() {
                         </div>
 
                         {/* Calendar Grid */}
-                        <div className="border-t border-l rounded-xl border-slate-200 dark:border-slate-800 overflow-x-auto custom-scrollbar">
-                            <div className="min-w-[280px]">
+                        <div className="border-t border-l rounded-xl overflow-hidden border-slate-200 dark:border-slate-800">
+                            <div className="flex sm:flex-col overflow-x-auto snap-x snap-mandatory sm:snap-none hide-scrollbar w-full">
                                 {rows}
                             </div>
+                        </div>
+                        
+                        {/* Swipe Hint for Mobile */}
+                        <div className="text-center sm:hidden mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-3">
+                            <FontAwesomeIcon icon={faChevronLeft} className="opacity-50" />
+                            <span>Desliza para ver más semanas</span>
+                            <FontAwesomeIcon icon={faChevronRight} className="opacity-50" />
                         </div>
                     </div>
                 </div>
