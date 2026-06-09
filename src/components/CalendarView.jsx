@@ -77,7 +77,7 @@ function CalendarView() {
                 <div
                     key={day}
                     onClick={() => handleDayClick(cloneDay)}
-                    className={`min-h-[80px] p-2 border transition-all cursor-pointer relative ${
+                    className={`min-h-[60px] sm:min-h-[80px] p-1 sm:p-2 border transition-all cursor-pointer relative flex flex-col items-center sm:items-start ${
                         !isSameMonth(day, monthStart)
                             ? (isDark ? 'bg-slate-900/20 text-slate-600 border-slate-800/50' : 'bg-slate-50 text-slate-300 border-slate-100')
                             : (isSameDay(day, selectedDate)
@@ -87,8 +87,8 @@ function CalendarView() {
                                     : (isDark ? 'bg-slate-800/50 text-slate-300 border-slate-700/50 hover:bg-slate-700/50' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'))
                     }`}
                 >
-                    <div className="flex justify-between items-start">
-                        <span className={`text-sm ${isSameDay(day, new Date()) ? 'font-black' : 'font-bold'}`}>{formattedDate}</span>
+                    <div className="flex justify-between items-start w-full">
+                        <span className={`text-xs sm:text-sm mx-auto sm:mx-0 ${isSameDay(day, new Date()) ? 'font-black' : 'font-bold'}`}>{formattedDate}</span>
                     </div>
                     {dayTotal > 0 && (
                         <div className="mt-2 text-center">
@@ -98,9 +98,9 @@ function CalendarView() {
                             <div className="flex justify-center gap-0.5 mt-1">
                                 {catDots.map(cat => {
                                     const style = categoryStyles[cat] || categoryStyles['otros']
-                                    return <span key={cat} className="text-[8px]">{style.emoji}</span>
+                                    return <span key={cat} className="text-[6px] sm:text-[8px]">{style.emoji}</span>
                                 })}
-                                {dayExpenses.length > 3 && <span className="text-[8px] text-slate-400">+{dayExpenses.length - 3}</span>}
+                                {dayExpenses.length > 3 && <span className="text-[6px] sm:text-[8px] text-slate-400">+{dayExpenses.length - 3}</span>}
                             </div>
                         </div>
                     )}
@@ -128,14 +128,14 @@ function CalendarView() {
                 <div className="flex-1">
                     <div className={`p-4 rounded-2xl border ${isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200'} shadow-xl mb-6`}>
                         {/* Header */}
-                        <div className="flex justify-between items-center mb-6 px-2">
-                            <button onClick={prevMonth} className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}>
+                        <div className="flex justify-between items-center mb-6 px-1 sm:px-2">
+                            <button onClick={prevMonth} className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}>
                                 <FontAwesomeIcon icon={faChevronLeft} />
                             </button>
-                            <h3 className="text-xl font-black capitalize" style={{ color: 'var(--aura-color)' }}>
+                            <h3 className="text-base sm:text-xl font-black capitalize" style={{ color: 'var(--aura-color)' }}>
                                 {format(currentMonthDate, 'MMMM yyyy', { locale: es })}
                             </h3>
-                            <button onClick={nextMonth} className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}>
+                            <button onClick={nextMonth} className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all ${isDark ? 'hover:bg-slate-800 text-slate-400' : 'hover:bg-slate-100 text-slate-600'}`}>
                                 <FontAwesomeIcon icon={faChevronRight} />
                             </button>
                         </div>
@@ -143,15 +143,17 @@ function CalendarView() {
                         {/* Days of week */}
                         <div className="grid grid-cols-7 mb-2">
                             {weekDays.map(day => (
-                                <div key={day} className={`text-center text-xs font-black uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                                <div key={day} className={`text-center text-[10px] sm:text-xs font-black uppercase tracking-wider ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                                     {day}
                                 </div>
                             ))}
                         </div>
 
                         {/* Calendar Grid */}
-                        <div className="border-t border-l rounded-xl overflow-hidden border-slate-200 dark:border-slate-800">
-                            {rows}
+                        <div className="border-t border-l rounded-xl border-slate-200 dark:border-slate-800 overflow-x-auto custom-scrollbar">
+                            <div className="min-w-[280px]">
+                                {rows}
+                            </div>
                         </div>
                     </div>
                 </div>

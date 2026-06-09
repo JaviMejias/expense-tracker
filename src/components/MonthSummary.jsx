@@ -169,7 +169,7 @@ function MonthSummary() {
             ) : (
                 <>
                     <div className={`border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200'} pt-8 mb-6`}>
-                        <div className={`flex flex-wrap items-center justify-between px-4 sm:px-8 py-4 rounded-2xl bg-gradient-to-r ${isDark ? 'from-slate-800/40 to-slate-800/10' : 'from-slate-100 to-white'} border ${isDark ? 'border-slate-700/50' : 'border-slate-200'}`}>
+                        <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-0 px-4 sm:px-8 py-4 sm:py-6 rounded-2xl bg-gradient-to-r ${isDark ? 'from-slate-800/40 to-slate-800/10' : 'from-slate-100 to-white'} border ${isDark ? 'border-slate-700/50' : 'border-slate-200'}`}>
                             <div className="text-center">
                                 <p className={`text-[10px] sm:text-xs uppercase font-black tracking-wider ${s.bodyTextMuted} mb-1`}>Saldo Anterior</p>
                                 <p className={`text-sm sm:text-lg font-bold ${previousBalance >= 0 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-rose-400' : 'text-rose-600')}`}>
@@ -215,14 +215,14 @@ function MonthSummary() {
                     </div>
 
                     {totalPendingReimbursements > 0 && (
-                        <div className={`mt-4 flex items-center justify-between px-5 py-3 rounded-xl border animate-in fade-in slide-in-from-bottom-2 duration-300 ${isDark ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
-                            <div className="flex items-center gap-3">
-                                <FontAwesomeIcon icon={faHandshake} className={`text-lg ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
-                                <p className={`text-sm font-bold ${isDark ? 'text-indigo-300' : 'text-indigo-800'}`}>
+                        <div className={`mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 rounded-xl border animate-in fade-in slide-in-from-bottom-2 duration-300 ${isDark ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
+                            <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+                                <FontAwesomeIcon icon={faHandshake} className={`text-xl sm:text-lg ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
+                                <p className={`text-sm sm:text-base font-bold ${isDark ? 'text-indigo-300' : 'text-indigo-800'}`}>
                                     Tienes dinero pendiente por cobrar de préstamos.
                                 </p>
                             </div>
-                            <p className={`text-lg font-black ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                            <p className={`text-xl sm:text-lg font-black ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}>
                                 +${formatCLP(totalPendingReimbursements)}
                             </p>
                         </div>
