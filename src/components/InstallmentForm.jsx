@@ -65,7 +65,7 @@ function InstallmentForm({ categories, isDark, activeTheme, activeColor, s, focu
 
         const dummyAppliedMonths = []
         for (let i = 0; i < alreadyPaid; i++) {
-            dummyAppliedMonths.push(`paid-${Date.now()}-${i}`)
+            dummyAppliedMonths.push(`paid-legacy-${i}`)
         }
 
         addInstallment({
