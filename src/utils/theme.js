@@ -1,63 +1,63 @@
 export const colorThemes = {
     rose: {
-        label: 'Rosa',
-        color: 'rose',
+        label: 'Rosa', color: 'rose',
+        hex: '#f43f5e',
         bg: 'border-rose-500/20 text-rose-400 bg-rose-500/5 hover:bg-rose-500/10',
         active: 'bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-500/30',
         bgClass: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
         gradient: 'from-rose-500 to-red-600'
     },
     blue: {
-        label: 'Azul',
-        color: 'blue',
+        label: 'Azul', color: 'blue',
+        hex: '#3b82f6',
         bg: 'border-blue-500/20 text-blue-400 bg-blue-500/5 hover:bg-blue-500/10',
         active: 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/30',
         bgClass: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
         gradient: 'from-blue-500 to-indigo-600'
     },
     amber: {
-        label: 'Ámbar',
-        color: 'amber',
+        label: 'Ámbar', color: 'amber',
+        hex: '#f59e0b',
         bg: 'border-amber-500/20 text-amber-400 bg-amber-500/5 hover:bg-amber-500/10',
         active: 'bg-amber-500 text-slate-950 border-amber-500 shadow-lg shadow-amber-500/30 font-extrabold',
         bgClass: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
         gradient: 'from-amber-500 to-yellow-600'
     },
     emerald: {
-        label: 'Esmeralda',
-        color: 'emerald',
+        label: 'Esmeralda', color: 'emerald',
+        hex: '#10b981',
         bg: 'border-emerald-500/20 text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10',
         active: 'bg-emerald-500 text-white border-emerald-500 shadow-lg shadow-emerald-500/30',
         bgClass: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
         gradient: 'from-emerald-500 to-teal-600'
     },
     pink: {
-        label: 'Pink',
-        color: 'pink',
+        label: 'Pink', color: 'pink',
+        hex: '#ec4899',
         bg: 'border-pink-500/20 text-pink-400 bg-pink-500/5 hover:bg-pink-500/10',
         active: 'bg-pink-500 text-white border-pink-500 shadow-lg shadow-pink-500/30',
         bgClass: 'bg-pink-500/10 border-pink-500/20 text-pink-400',
         gradient: 'from-fuchsia-500 to-pink-500'
     },
     violet: {
-        label: 'Violeta',
-        color: 'violet',
+        label: 'Violeta', color: 'violet',
+        hex: '#8b5cf6',
         bg: 'border-violet-500/20 text-violet-400 bg-violet-500/5 hover:bg-violet-500/10',
         active: 'bg-violet-500 text-white border-violet-500 shadow-lg shadow-violet-500/30',
         bgClass: 'bg-violet-500/10 border-violet-500/20 text-violet-400',
         gradient: 'from-violet-500 to-purple-600'
     },
     sky: {
-        label: 'Cian',
-        color: 'sky',
+        label: 'Cian', color: 'sky',
+        hex: '#06b6d4',
         bg: 'border-sky-500/20 text-sky-400 bg-sky-500/5 hover:bg-sky-500/10',
         active: 'bg-sky-500 text-white border-sky-500 shadow-lg shadow-sky-500/30',
         bgClass: 'bg-sky-500/10 border-sky-500/20 text-sky-400',
         gradient: 'from-sky-500 to-blue-600'
     },
     slate: {
-        label: 'Gris',
-        color: 'slate',
+        label: 'Gris', color: 'slate',
+        hex: '#64748b',
         bg: 'border-slate-600/20 text-slate-400 bg-slate-800/10 hover:bg-slate-700/20',
         active: 'bg-slate-600 text-white border-slate-500 shadow-lg shadow-slate-500/30',
         bgClass: 'bg-slate-500/10 border-slate-500/20 text-slate-400',

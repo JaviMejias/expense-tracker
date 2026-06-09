@@ -52,9 +52,16 @@ function BarChart({ data, maxSpend, isDark, s, aura }) {
                         tickFormatter={(value) => `$${formatCLP(value)}`}
                     />
                     <Tooltip content={<CustomTooltip />} cursor={{ fill: isDark ? '#1e293b' : '#f1f5f9', opacity: 0.5 }} />
-                    <Bar dataKey="total" radius={[6, 6, 0, 0]} animationDuration={1000}>
+                    <Bar 
+                        dataKey="total" 
+                        radius={[8, 8, 0, 0]} 
+                        animationDuration={1200}
+                        animationEasing="ease-out"
+                        isAnimationActive={true}
+                        activeBar={{ fill: colorStart, filter: `drop-shadow(0 0 8px ${colorStart}80)` }}
+                    >
                         {data.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill="url(#barGradient)" />
+                            <Cell key={`cell-${index}`} fill={entry.total > 0 ? "url(#barGradient)" : (isDark ? '#1e293b' : '#f1f5f9')} />
                         ))}
                     </Bar>
                 </RechartsBarChart>

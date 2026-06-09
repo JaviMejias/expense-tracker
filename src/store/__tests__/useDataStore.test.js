@@ -178,4 +178,57 @@ describe('useDataStore', () => {
     // The installment should be un-applied
     expect(finalState.installments[0].appliedMonths).not.toContain('06-2023')
   })
+
+  it('should register a reimbursement for an expense', () => {
+    const store = useDataStore.getState()
+    
+    // Add one reimbursable expense
+    store.addExpense({
+      date: '2023-10-01T12:00:00.000Z',
+      description: 'Préstamo',
+      amount: 50000,
+      category: 'otros',
+      isReimbursable: true,
+      reimbursedAmount: 0
+    })
+
+    const stateWithExpense = useDataStore.getState()
+    const expenseId = stateWithExpense.expenses[0].id
+
+    // Register a partial reimbursement
+    stateWithExpense.registerReimbursement(expenseId, 20000)
+
+    const finalState = useDataStore.getState()
+    expect(finalState.expenses[0].reimbursedAmount).toBe(20000)
+
+    // Register another partial reimbursement
+    finalState.registerReimbursement(expenseId, 30000)
+    
+    const completelyPaidState = useDataStore.getState()
+    expect(completelyPaidState.expenses[0].reimbursedAmount).toBe(50000)
+  })
+
+  it('should forgive debt for an expense', () => {
+    const store = useDataStore.getState()
+    
+    store.addExpense({
+      date: '2023-10-01T12:00:00.000Z',
+      description: 'Préstamo perdido',
+      amount: 50000,
+      category: 'otros',
+      isReimbursable: true,
+      reimbursedAmount: 10000,
+      isForgiven: false
+    })
+
+    const stateWithExpense = useDataStore.getState()
+    const expenseId = stateWithExpense.expenses[0].id
+
+    // Forgive debt
+    stateWithExpense.forgiveReimbursement(expenseId)
+
+    const finalState = useDataStore.getState()
+    expect(finalState.expenses[0].isForgiven).toBe(true)
+    expect(finalState.expenses[0].reimbursedAmount).toBe(10000) // unchanged
+  })
 })

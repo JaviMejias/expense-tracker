@@ -2,15 +2,36 @@ import { format, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { formatCLP } from '../utils/currency'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCalendarAlt, faTrash, faLightbulb } from '@fortawesome/free-solid-svg-icons'
+import { faCalendarAlt, faTrash, faLightbulb, faCheckCircle, faHistory, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
 import CustomButton from './CustomButton'
 import CircularProgress from './CircularProgress'
+import CountUp from 'react-countup'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
-function SavingsGoalItem({ goal, theme, percent, s, isDark, aura, monthsLeft, monthlySuggestion, onContribute, onDelete }) {
+function SavingsGoalItem({ goal, theme, percent, s, isDark, aura, monthsLeft, monthlySuggestion, onContribute, onDelete, index = 0 }) {
     const isCompleted = goal.currentSaved >= goal.targetAmount
+    const [showHistory, setShowHistory] = useState(false)
+    const contributions = goal.contributions || []
 
     return (
-        <div className={`group p-6 ${isDark ? 'bg-slate-800/60 border-slate-700/50 hover:border-indigo-500/30' : 'bg-white border-slate-200 shadow-md shadow-slate-100/30 hover:border-indigo-500/50'} border rounded-3xl transition-all duration-300 flex flex-col gap-4 relative overflow-hidden`}>
+        <motion.div
+            layout
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.15 } }}
+            transition={{ type: 'spring', stiffness: 500, damping: 30, mass: 1, delay: Math.min(index * 0.05, 0.3) }}
+            className={`group p-6 ${isDark ? 'bg-slate-800/60 border-slate-700/50 hover:border-indigo-500/30' : 'bg-white border-slate-200 shadow-md shadow-slate-100/30 hover:border-indigo-500/50'} border rounded-3xl flex flex-col gap-4 relative overflow-hidden`}
+        >
+            {/* Shimmer overlay on hover */}
+            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{
+                    background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.05) 50%, transparent 60%)',
+                    backgroundSize: '200% 100%',
+                    animation: 'shimmer 1.5s linear infinite'
+                }}
+            />
+
             {/* Header row */}
             <div className="flex items-start gap-4">
                 <div className="flex-1 space-y-2">
@@ -24,8 +45,8 @@ function SavingsGoalItem({ goal, theme, percent, s, isDark, aura, monthsLeft, mo
                     <div className="flex flex-col gap-1">
                         <div className={`flex justify-between text-xs font-bold ${s.bodyTextMuted}`}>
                             <span>Ahorrado:</span>
-                            <span className={`${isDark ? 'text-slate-200' : 'text-slate-700'}`}>
-                                ${formatCLP(goal.currentSaved)} / ${formatCLP(goal.targetAmount)}
+                            <span className={`${isDark ? 'text-slate-200' : 'text-slate-700'} tabular-nums`}>
+                                $<CountUp end={goal.currentSaved} duration={1} separator="." preserveValue useEasing /> / ${formatCLP(goal.targetAmount)}
                             </span>
                         </div>
 
@@ -48,14 +69,12 @@ function SavingsGoalItem({ goal, theme, percent, s, isDark, aura, monthsLeft, mo
 
             {/* Monthly suggestion pill */}
             {monthlySuggestion && !isCompleted && (
-                <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border ${isDark ? 'bg-emerald-500/5 border-emerald-500/15' : 'bg-emerald-50 border-emerald-200'}`}>
+                <div className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl border transition-all duration-300 ${isDark ? 'bg-emerald-500/5 border-emerald-500/15' : 'bg-emerald-50 border-emerald-200'}`}>
                     <FontAwesomeIcon icon={faLightbulb} className={`text-sm ${isDark ? 'text-emerald-400' : 'text-emerald-600'} shrink-0`} />
                     <div className="min-w-0">
                         <p className={`text-[9px] font-black uppercase tracking-widest ${isDark ? 'text-emerald-500' : 'text-emerald-700'}`}>Sugerencia mensual</p>
                         <p className={`text-xs font-bold mt-0.5 ${isDark ? 'text-slate-300' : 'text-slate-600'} truncate`}>
-                            Ahorra
-                            <span className={`font-black ${isDark ? 'text-emerald-300' : 'text-emerald-600'}`}> ${formatCLP(monthlySuggestion)}/mes </span>
-                            para cumplir tu meta a tiempo.
+                            Ahorra <span className={`font-black ${isDark ? 'text-emerald-300' : 'text-emerald-600'}`}>${formatCLP(monthlySuggestion)}/mes </span> para cumplir tu meta a tiempo.
                         </p>
                     </div>
                 </div>
@@ -67,15 +86,45 @@ function SavingsGoalItem({ goal, theme, percent, s, isDark, aura, monthsLeft, mo
                     Aportar 💰
                 </CustomButton>
             ) : (
-                <span className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-xl inline-block animate-pulse">
+                <div className={`flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-extrabold uppercase tracking-widest px-3 py-2 rounded-xl`}>
+                    <FontAwesomeIcon icon={faCheckCircle} className="animate-bounce" />
                     Meta Completada 🎉
-                </span>
+                </div>
             )}
 
-            <button type="button" onClick={() => onDelete(goal.id)} className={`absolute top-4 right-4 ${isDark ? 'bg-slate-900/50 border-slate-700/50 hover:bg-rose-500/20 hover:border-rose-500/50 text-slate-400 hover:text-rose-400' : 'bg-slate-100/80 border-slate-200 hover:bg-rose-500 hover:text-white text-slate-500'} border w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer opacity-100 sm:opacity-0 group-hover:opacity-100 select-none`} title="Eliminar meta">
+            <button
+                type="button"
+                onClick={() => onDelete(goal.id)}
+                className={`absolute top-4 right-4 ${isDark ? 'bg-slate-900/50 border-slate-700/50 hover:bg-rose-500/20 hover:border-rose-500/50 text-slate-400 hover:text-rose-400' : 'bg-slate-100/80 border-slate-200 hover:bg-rose-500 hover:text-white text-slate-500'} border w-7 h-7 rounded-xl flex items-center justify-center transition-all duration-300 cursor-pointer opacity-100 sm:opacity-0 group-hover:opacity-100 sm:translate-y-1 group-hover:translate-y-0 select-none`}
+                title="Eliminar meta"
+            >
                 <FontAwesomeIcon icon={faTrash} className="text-[10px]" />
             </button>
-        </div>
+
+            {/* Contribution History */}
+            {contributions.length > 0 && (
+                <div className={`border-t mt-1 pt-3 ${isDark ? 'border-slate-700/40' : 'border-slate-200/70'}`}>
+                    <button
+                        onClick={() => setShowHistory(h => !h)}
+                        className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${isDark ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600'} transition-colors`}
+                    >
+                        <FontAwesomeIcon icon={faHistory} />
+                        {contributions.length} {contributions.length === 1 ? 'Aporte' : 'Aportes'}
+                        <FontAwesomeIcon icon={showHistory ? faChevronUp : faChevronDown} className="ml-1" />
+                    </button>
+                    {showHistory && (
+                        <div className={`mt-2 space-y-1.5 animate-in fade-in slide-in-from-top-2 duration-300`}>
+                            {[...contributions].reverse().map(c => (
+                                <div key={c.id} className={`flex justify-between items-center text-[11px] font-bold px-3 py-1.5 rounded-lg ${isDark ? 'bg-slate-900/50 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>
+                                    <span>{format(parseISO(c.date), "d MMM yyyy", { locale: es })}</span>
+                                    <span className={isDark ? 'text-emerald-400' : 'text-emerald-600'}>+${formatCLP(c.amount)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </motion.div>
     )
 }
 

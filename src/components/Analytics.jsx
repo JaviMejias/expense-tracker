@@ -13,7 +13,7 @@ import TopExpenseItem from './TopExpenseItem'
 import AuraYearSelector from './AuraYearSelector'
 import BarChart from './BarChart'
 import StatCard from './StatCard'
-import AdvisorCard from './AdvisorCard'
+import GeminiAdvisorCard from './GeminiAdvisorCard'
 import { appThemes } from '../utils/theme'
 import { useDataStore } from '../store/useDataStore'
 import { useThemeStore } from '../store/useThemeStore'
@@ -115,25 +115,14 @@ function Analytics() {
                         gradientClass={aura.gradientText}
                         iconClass={`${aura.icon} animate-pulse`}
                     />
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <AdvisorCard
-                            title={momTrendCard.title}
-                            text={momTrendCard.text}
-                            icon={momTrendCard.icon}
-                            colorClass={momTrendCard.colorClass}
-                            isDark={isDark}
-                            s={s}
-                        />
-                        <AdvisorCard
-                            title="Foco de Ahorro Recomendado"
-                            text={paretoAdvice}
-                            icon={faLightbulb}
-                            iconColorClass="text-yellow-400"
-                            colorClass={s.advisorPareto}
-                            isDark={isDark}
-                            s={s}
-                        />
-                    </div>
+                    
+                    <GeminiAdvisorCard 
+                        selectedYear={selectedYear}
+                        isDark={isDark}
+                        activeTheme={activeTheme}
+                        s={s}
+                        aura={aura}
+                    />
                 </div>
             )}
 

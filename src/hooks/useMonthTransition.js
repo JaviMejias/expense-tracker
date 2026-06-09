@@ -38,34 +38,8 @@ export function useMonthTransition() {
         } = useDataStore.getState()
 
         // --- 1. Remanente del mes anterior ---
-        const prevSalary = salaries[fromMonthKey] || 0
-        const prevExpenses = expenses.filter(exp => {
-            try { return format(parseISO(exp.date), 'MM-yyyy') === fromMonthKey } catch { return false }
-        })
-        const prevTotal = prevExpenses.reduce((acc, curr) => acc + curr.amount, 0)
-        const remainder = prevSalary - prevTotal
-
-        if (remainder > 0) {
-            const fromDate = parse(fromMonthKey, 'MM-yyyy', new Date())
-            const toDate = parse(toMonthKey, 'MM-yyyy', new Date())
-            const newSalary = salaries[toMonthKey] || 0
-
-            const result = await showConfirm(
-                `💰 Remanente de ${format(fromDate, 'MMMM', { locale: es })}`,
-                `Te quedaron $${formatCLP(remainder)} del mes anterior.${
-                    newSalary > 0
-                        ? ` Tu sueldo de ${format(toDate, 'MMMM', { locale: es })} pasaría de $${formatCLP(newSalary)} a $${formatCLP(newSalary + remainder)}.`
-                        : ` ¿Deseas usarlo como sueldo disponible para ${format(toDate, 'MMMM', { locale: es })}?`
-                }`,
-                '✅ Sí, sumarlo',
-                false
-            )
-
-            if (result.isConfirmed) {
-                handleSalaryChange(toMonthKey, newSalary + remainder)
-                showToast(`+$${formatCLP(remainder)} sumados al sueldo de ${format(toDate, 'MMMM', { locale: es })} 🎉`, 'success', 3500)
-            }
-        }
+        // Remanente automático ahora es manejado por useDerivedData (Billetera Continua).
+        // Ya no se requiere prompt manual de arrastre.
 
         // --- 2. Cuotas pendientes para el nuevo mes ---
         const pending = getPendingInstallments(installments || [], toMonthKey)

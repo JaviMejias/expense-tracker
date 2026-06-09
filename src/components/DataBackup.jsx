@@ -1,7 +1,9 @@
 import { useRef } from 'react'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
+import { es } from 'date-fns/locale'
+import * as XLSX from 'xlsx'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faDownload, faUpload, faDatabase } from '@fortawesome/free-solid-svg-icons'
+import { faDownload, faUpload, faDatabase, faFileExcel } from '@fortawesome/free-solid-svg-icons'
 import { useAppAlert } from '../hooks/useAppAlert'
 import { useThemeStyles } from '../hooks/useThemeStyles'
 import CustomButton from './CustomButton'
@@ -48,6 +50,64 @@ function DataBackup() {
             URL.revokeObjectURL(url)
         } catch (error) {
             showAlert('Error', 'No se pudo exportar el respaldo.', 'error')
+        }
+    }
+
+    const handleExportExcel = () => {
+        try {
+            const dataStore = JSON.parse(localStorage.getItem('expenseTracker-data'))?.state || {}
+            const expenses = dataStore.expenses || []
+            const categories = dataStore.categories || []
+            const salaries = dataStore.salaries || {}
+
+            if (expenses.length === 0) {
+                showAlert('Sin datos', 'No hay gastos registrados para exportar.', 'info')
+                return
+            }
+
+            const catMap = Object.fromEntries(categories.map(c => [c.id, `${c.emoji} ${c.name}`]))
+
+            // Sheet 1: All expenses
+            const expenseRows = expenses
+                .sort((a, b) => new Date(b.date) - new Date(a.date))
+                .map(exp => ({
+                    'Fecha': format(parseISO(exp.date), "dd 'de' MMMM yyyy", { locale: es }),
+                    'Descripción': exp.description,
+                    'Monto ($)': exp.amount,
+                    'Categoría': catMap[exp.category] || exp.category || 'Otros',
+                    'Mes': format(parseISO(exp.date), 'MM-yyyy')
+                }))
+
+            // Sheet 2: Monthly summary
+            const monthlyMap = {}
+            expenses.forEach(exp => {
+                const key = format(parseISO(exp.date), 'MM-yyyy')
+                monthlyMap[key] = (monthlyMap[key] || 0) + exp.amount
+            })
+            const summaryRows = Object.entries(monthlyMap)
+                .sort(([a], [b]) => b.localeCompare(a))
+                .map(([month, total]) => ({
+                    'Mes': month,
+                    'Total Gastado ($)': total,
+                    'Sueldo ($)': salaries[month] || 0,
+                    'Diferencia ($)': (salaries[month] || 0) - total
+                }))
+
+            const wb = XLSX.utils.book_new()
+            const ws1 = XLSX.utils.json_to_sheet(expenseRows)
+            const ws2 = XLSX.utils.json_to_sheet(summaryRows)
+
+            // Column widths
+            ws1['!cols'] = [{ wch: 26 }, { wch: 35 }, { wch: 15 }, { wch: 20 }, { wch: 12 }]
+            ws2['!cols'] = [{ wch: 12 }, { wch: 18 }, { wch: 14 }, { wch: 15 }]
+
+            XLSX.utils.book_append_sheet(wb, ws1, 'Todos los Gastos')
+            XLSX.utils.book_append_sheet(wb, ws2, 'Resumen Mensual')
+
+            const dateStr = format(new Date(), 'dd-MM-yyyy')
+            XLSX.writeFile(wb, `Mis_Gastos_Aura_${dateStr}.xlsx`)
+        } catch (error) {
+            showAlert('Error', 'No se pudo generar el archivo Excel.', 'error')
         }
     }
 
@@ -128,7 +188,21 @@ function DataBackup() {
                     activeTheme={activeTheme}
                     isDark={isDark}
                 >
-                    Descargar Respaldo
+                    Respaldo JSON
+                </CustomButton>
+
+                <CustomButton
+                    onClick={handleExportExcel}
+                    variant="custom"
+                    icon={faFileExcel}
+                    className={`flex-1 py-4 px-5 !rounded-2xl font-extrabold ${
+                        isDark
+                            ? 'bg-emerald-600/20 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500 hover:text-white'
+                            : 'bg-emerald-50 border border-emerald-200 text-emerald-700 hover:bg-emerald-500 hover:text-white'
+                    } transition-all duration-300 hover:-translate-y-0.5 shadow-md`}
+                    isDark={isDark}
+                >
+                    Exportar Excel
                 </CustomButton>
 
                 <input
