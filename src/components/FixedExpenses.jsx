@@ -1,22 +1,20 @@
 import { useState } from 'react'
-import { format, addMonths } from 'date-fns'
+import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { formatCLP, parseCLP } from '../utils/currency'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faStar, faSave, faAlignLeft, faCoins, faTags, faCreditCard, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
+import { faStar, faChevronDown, faChevronUp } from '@fortawesome/free-solid-svg-icons'
 import CustomDatePicker from './CustomDatePicker'
-import CustomButton from './CustomButton'
-import CustomInput from './CustomInput'
-import CategorySelector from './CategorySelector'
 import { useThemeStyles } from '../hooks/useThemeStyles'
 import { useAppAlert } from '../hooks/useAppAlert'
 import EmptyState from './EmptyState'
 import FixedExpenseItem from './FixedExpenseItem'
+import FixedExpenseForm from './FixedExpenseForm'
 import { useCategoryStyles } from '../hooks/useCategoryStyles'
 import { useDataStore } from '../store/useDataStore'
 import { useUIStore } from '../store/useUIStore'
 import { useThemeStore } from '../store/useThemeStore'
 import { appThemes } from '../utils/theme'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const weekDays = [
     { id: 1, name: 'Lun' },
@@ -38,27 +36,10 @@ function FixedExpenses() {
     const { s, isDark, activeColor, textGradientClass, focusRingClass, aura } = useThemeStyles(themeMode, activeTheme)
     const { showToast, showConfirm } = useAppAlert(themeMode)
 
-    // --- Estado: formulario gastos fijos ---
-    const [fixedDescription, setFixedDescription] = useState('')
-    const [fixedAmount, setFixedAmount] = useState('')
-    const [fixedType, setFixedType] = useState('single')
-    const [fixedDays, setFixedDays] = useState([])
-    const [fixedCategory, setFixedCategory] = useState('otros')
-    const [fixedErrors, setFixedErrors] = useState({})
+    const [showForm, setShowForm] = useState(false)
 
     const currentMonthKey = format(currentMonthDate, 'MM-yyyy')
     const categoryStyles = useCategoryStyles(categories)
-
-    // --- Handlers: gastos fijos ---
-    const handleFixedAmountChange = (e) => {
-        const val = e.target.value
-        const filtered = val.replace(/[^0-9+\-*/().\s]/g, '')
-        setFixedAmount(filtered)
-    }
-
-    const toggleFixedDay = (dayId) => {
-        setFixedDays(prev => prev.includes(dayId) ? prev.filter(d => d !== dayId) : [...prev, dayId])
-    }
 
     const handleApplyToMonth = async (item) => {
         const applied = item.appliedMonths || []
@@ -76,31 +57,6 @@ function FixedExpenses() {
         showToast(`¡"${item.description}" añadido a ${format(currentMonthDate, 'MMMM', { locale: es })}!`)
     }
 
-    const handleSaveFixedExpense = (e) => {
-        e.preventDefault()
-        const currentErrors = {}
-        let isValid = true
-
-        if (!fixedDescription.trim()) { currentErrors.description = 'La descripción es requerida.'; isValid = false }
-        if (parseCLP(fixedAmount) <= 0) { currentErrors.amount = 'El monto debe ser mayor a cero.'; isValid = false }
-        if (fixedType === 'weekly' && fixedDays.length === 0) { currentErrors.days = 'Debes seleccionar al menos un día.'; isValid = false }
-
-        setFixedErrors(currentErrors)
-        if (!isValid) return
-
-        setFixedExpenses([...fixedExpenses, {
-            id: Date.now(),
-            description: fixedDescription,
-            amount: parseCLP(fixedAmount),
-            type: fixedType,
-            days: fixedType === 'weekly' ? fixedDays : [],
-            category: fixedCategory || 'otros',
-            appliedMonths: []
-        }])
-        setFixedDescription(''); setFixedAmount(''); setFixedDays([]); setFixedType('single'); setFixedCategory('otros')
-        showToast('Plantilla guardada', 'success', 2000)
-    }
-
     const handleDeleteFixedExpense = async (id) => {
         const item = fixedExpenses.find(f => f.id === id)
         const confirmed = await showConfirm('¿Eliminar plantilla?', `¿Estás seguro de eliminar "${item?.description || 'esta plantilla'}"?`)
@@ -113,81 +69,46 @@ function FixedExpenses() {
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-10 relative">
 
-            {/* === Plantillas de Gastos Fijos === */}
             <div>
-                <h2 className={`text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r ${textGradientClass} mb-6 flex items-center gap-2`}>
-                    <FontAwesomeIcon icon={faStar} className={aura.icon} /> Plantillas de Gastos
-                </h2>
-                <form onSubmit={handleSaveFixedExpense} className={`space-y-5 ${s.itemBg} p-6 rounded-3xl`}>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div>
-                            <label htmlFor="fixedDescription" className={`flex items-center gap-2 text-sm font-bold ${aura.label} transition-colors mb-2`}>
-                                <FontAwesomeIcon icon={faAlignLeft} /> Nombre (Ej: Gym, Pasajes):
-                            </label>
-                            <CustomInput id="fixedDescription" value={fixedDescription} onChange={(e) => setFixedDescription(e.target.value)} s={s} focusRingClass={focusRingClass} className="py-3 rounded-xl font-medium" />
-                            {fixedErrors.description && <p className="mt-1 text-sm text-rose-400 font-bold">{fixedErrors.description}</p>}
-                        </div>
-                        <div>
-                            <label htmlFor="fixedAmount" className={`flex items-center gap-2 text-sm font-bold ${aura.label} transition-colors mb-2`}>
-                                <FontAwesomeIcon icon={faCoins} /> Monto Total Diario/Único:
-                            </label>
-                            <CustomInput id="fixedAmount" value={fixedAmount} onChange={handleFixedAmountChange} isAmount={true} setEvaluatedAmount={setFixedAmount} iconClass={aura.icon} s={s} focusRingClass={focusRingClass} className="py-3 rounded-xl font-bold" />
-                            {fixedErrors.amount && <p className="mt-1 text-sm text-rose-400 font-bold">{fixedErrors.amount}</p>}
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className={`block text-sm font-bold ${aura.label} mb-2`}>Tipo de Gasto:</label>
-                        <div className="flex flex-col sm:flex-row gap-4">
-                            <label className={`flex items-center gap-2 cursor-pointer ${isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-300 text-slate-700'} ${aura.radioHover} px-4 py-3 rounded-xl border transition-all flex-1 select-none`}>
-                                <input type="radio" checked={fixedType === 'single'} onChange={() => setFixedType('single')} className={`w-5 h-5 cursor-pointer ${aura.radio}`} />
-                                <span className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>Mensual Único</span>
-                            </label>
-                            <label className={`flex items-center gap-2 cursor-pointer ${isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-300 text-slate-700'} ${aura.radioHover} px-4 py-3 rounded-xl border transition-all flex-1 select-none`}>
-                                <input type="radio" checked={fixedType === 'weekly'} onChange={() => setFixedType('weekly')} className={`w-5 h-5 cursor-pointer ${aura.radio}`} />
-                                <span className={`font-bold ${isDark ? 'text-slate-200' : 'text-slate-700'}`}>Repetir por Días</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    {fixedType === 'weekly' && (
-                        <div className="animate-in fade-in slide-in-from-top-2">
-                            <label className={`block text-sm font-bold ${aura.label} mb-3`}>Selecciona los días (Ej: Lunes a Viernes):</label>
-                            <div className="flex flex-wrap gap-2">
-                                {weekDays.map(day => (
-                                    <button key={day.id} type="button" onClick={() => toggleFixedDay(day.id)}
-                                        className={`px-4 py-2 rounded-xl font-bold transition-all transform hover:scale-105 cursor-pointer ${fixedDays.includes(day.id) ? aura.dayActive : (isDark ? `bg-slate-900 text-slate-400 border border-slate-700 ${aura.dayHover}` : `bg-white text-slate-600 border border-slate-300 shadow-sm ${aura.dayHover}`)}`}>
-                                        {day.name}
-                                    </button>
-                                ))}
-                            </div>
-                            {fixedErrors.days && <p className="mt-2 text-sm text-rose-400 font-bold">{fixedErrors.days}</p>}
-                        </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <h2 className={`text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r ${textGradientClass} flex items-center gap-2`}>
+                        <FontAwesomeIcon icon={faStar} className={aura.icon} /> Plantillas de Gastos
+                    </h2>
+                    <button
+                        type="button"
+                        onClick={() => setShowForm(!showForm)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider border transition-all cursor-pointer
+                            ${showForm
+                                ? (isDark ? 'bg-slate-700 border-slate-600 text-slate-300' : 'bg-slate-200 border-slate-300 text-slate-600')
+                                : (isDark ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/30' : 'bg-indigo-50 border-indigo-200 text-indigo-600 hover:bg-indigo-100')
+                            }`}
+                    >
+                        <FontAwesomeIcon icon={showForm ? faChevronUp : faChevronDown} />
+                        {showForm ? 'Cerrar' : 'Nueva Plantilla'}
+                    </button>
+                </div>
+                
+                <AnimatePresence>
+                    {showForm && (
+                        <FixedExpenseForm
+                            weekDays={weekDays}
+                            isDark={isDark}
+                            activeTheme={activeTheme}
+                            aura={aura}
+                            s={s}
+                            focusRingClass={focusRingClass}
+                            onCancel={() => setShowForm(false)}
+                        />
                     )}
-
-                    <div className="group">
-                        <label className={`flex items-center gap-2 text-sm font-bold ${aura.label} mb-3 transition-colors`}>
-                            <FontAwesomeIcon icon={faTags} /> Categoría de la Plantilla:
-                        </label>
-                        <CategorySelector categories={categories} selectedId={fixedCategory} onSelect={setFixedCategory} isDark={isDark} focusRingClass={focusRingClass} hoverClass={aura.hoverItem} />
-                    </div>
-
-                    <CustomButton type="submit" variant="primary" icon={faSave} className="w-full py-4 mt-4" activeTheme={activeTheme} isDark={isDark}>
-                        Guardar Plantilla
-                    </CustomButton>
-                </form>
+                </AnimatePresence>
             </div>
 
-            {/* Lista de plantillas */}
             <div>
-                <div className={`flex flex-col sm:flex-row sm:items-center justify-between border-b ${isDark ? 'border-slate-700/50' : 'border-slate-200'} pb-4 mb-6 gap-4`}>
-                    <h3 className={`text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r ${textGradientClass} flex items-center gap-2`}>
-                        Mis Plantillas
-                    </h3>
-                    <div className={`w-full sm:w-auto bg-gradient-to-br ${aura.monthBox} backdrop-blur-md px-5 py-3 rounded-2xl border flex flex-col sm:flex-row items-center gap-3 sm:gap-4 transition-all group`}>
+                <div className="flex flex-col sm:flex-row justify-end mb-6">
+                    <div className={`w-full sm:w-auto bg-gradient-to-br ${aura.monthBox} backdrop-blur-md px-5 py-3 rounded-2xl border flex flex-col sm:flex-row items-center gap-3 sm:gap-4 transition-all group shadow-sm`}>
                         <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span className="text-xs font-black text-slate-300 group-hover:text-indigo-300 transition-colors uppercase tracking-wider">Aplicar al mes de:</span>
+                            <span className={`text-xs font-black ${isDark ? 'text-slate-300 group-hover:text-indigo-300' : 'text-slate-500 group-hover:text-indigo-600'} transition-colors uppercase tracking-wider`}>Aplicar al mes de:</span>
                         </div>
                         <CustomDatePicker selected={currentMonthDate} onChange={(date) => setCurrentMonthDate(date)} type="month" activeColor={activeColor} activeTheme={activeTheme} isDark={isDark} s={s} focusRingClass={focusRingClass} wrapperClassName="w-full sm:w-auto" className="sm:w-44 px-4 py-2 rounded-xl font-extrabold text-xs uppercase tracking-wide" />
                     </div>

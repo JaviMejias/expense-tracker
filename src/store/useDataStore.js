@@ -1,30 +1,11 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import { parseISO, getDaysInMonth, getDay, format } from 'date-fns'
-import { colorThemes } from '../utils/theme'
 
-const generateId = (prefix = 'id') => `${prefix}_${crypto.randomUUID()}`
-
-// Función para migrar datos antiguos si existen
-const getInitialData = (key, defaultVal) => {
-    try {
-        const savedData = localStorage.getItem('expenseTrackerV6')
-        if (savedData) {
-            const parsedData = JSON.parse(savedData)
-            if (parsedData[key] !== undefined) return parsedData[key]
-        }
-    } catch (e) {
-        console.error("Error reading legacy data", e)
-    }
-    return defaultVal
-}
-
-const defaultCategories = [
-    { id: 'comida', name: 'Comida', emoji: '🍔', color: 'rose', colorClass: 'border-rose-500/20 text-rose-400 bg-rose-500/5 hover:bg-rose-500/10', activeClass: 'bg-rose-500 text-white border-rose-500 shadow-lg shadow-rose-500/30' },
-    { id: 'servicios', name: 'Servicios', emoji: '⚡', color: 'blue', colorClass: 'border-blue-500/20 text-blue-400 bg-blue-500/5 hover:bg-blue-500/10', activeClass: 'bg-blue-500 text-white border-blue-500 shadow-lg shadow-blue-500/30' },
-    { id: 'transporte', name: 'Transporte', emoji: '🚗', color: 'amber', colorClass: 'border-amber-500/20 text-amber-400 bg-amber-500/5 hover:bg-amber-500/10', activeClass: 'bg-amber-500 text-slate-950 border-amber-500 shadow-lg shadow-amber-500/30 font-extrabold' },
-    { id: 'otros', name: 'Otros', emoji: '🏷️', color: 'slate', colorClass: 'border-slate-600/20 text-slate-400 bg-slate-800/10 hover:bg-slate-700/20', activeClass: 'bg-slate-600 text-white border-slate-500 shadow-lg shadow-slate-500/30' }
-]
+import { createCoreSlice } from './slices/coreSlice'
+import { createExpensesSlice } from './slices/expensesSlice'
+import { createCategoriesSlice } from './slices/categoriesSlice'
+import { createInstallmentsSlice } from './slices/installmentsSlice'
+import { createSavingsGoalsSlice } from './slices/savingsGoalsSlice'
 
 export const useDataStore = create(
     persist(
@@ -80,7 +61,7 @@ export const useDataStore = create(
             deleteExpense: (idOrIds) => set((state) => {
                 const idsToDelete = Array.isArray(idOrIds) ? idOrIds : [idOrIds]
                 const expensesToDelete = state.expenses.filter(exp => idsToDelete.includes(exp.id))
-                
+
                 // Revertir cuotas si el gasto estaba vinculado
                 let newInstallments = state.installments ? [...state.installments] : []
                 expensesToDelete.forEach(exp => {
@@ -97,7 +78,7 @@ export const useDataStore = create(
                     }
                 })
 
-                return { 
+                return {
                     expenses: state.expenses.filter(exp => !idsToDelete.includes(exp.id)),
                     installments: newInstallments
                 }
@@ -217,7 +198,7 @@ export const useDataStore = create(
                                 ...i,
                                 appliedMonths: [...appliedMonths, monthKey],
                                 skippedMonths: (i.skippedMonths || []).filter(m => m !== monthKey)
-                              }
+                            }
                             : i
                     ),
                     expenses: [...state.expenses, newExpense]
@@ -276,7 +257,7 @@ export const useDataStore = create(
                                 color: updatedFields.color,
                                 colorClass: theme.bg,
                                 activeClass: theme.active
-                              }
+                            }
                             : cat
                     )
                 }))
@@ -306,7 +287,7 @@ export const useDataStore = create(
             },
 
             // Kept for backward compatibility — components that call deleteCategory directly
-            deleteCategory: () => {},
+            deleteCategory: () => { },
 
 
             addSavingsGoal: (newGoal) => set((state) => {
@@ -332,14 +313,14 @@ export const useDataStore = create(
             },
 
             // Kept for backward compatibility
-            deleteSavingsGoal: () => {},
+            deleteSavingsGoal: () => { },
 
 
             contributeToGoal: (goalId, amountToContribute, currentMonthDate) => {
                 let isCompleted = false
                 const state = get()
                 const targetGoal = state.savingsGoals.find(g => g.id === goalId)
-                
+
                 if (targetGoal) {
                     set((s) => {
                         const newGoals = s.savingsGoals.map(g => {
@@ -352,7 +333,7 @@ export const useDataStore = create(
                             }
                             return g
                         })
-                        
+
                         const expenseDateObj = new Date(currentMonthDate.getFullYear(), currentMonthDate.getMonth(), Math.min(new Date().getDate(), getDaysInMonth(currentMonthDate)))
                         const newExpense = {
                             id: generateId('exp'),
@@ -361,7 +342,7 @@ export const useDataStore = create(
                             amount: amountToContribute,
                             category: 'otros'
                         }
-                        
+
                         return { savingsGoals: newGoals, expenses: [...s.expenses, newExpense] }
                     })
                 }

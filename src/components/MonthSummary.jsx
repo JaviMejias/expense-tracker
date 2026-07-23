@@ -1,6 +1,7 @@
 import { formatCLP, parseCLP } from '../utils/currency'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faCalendarAlt, faMoneyBillWave, faChartPie, faPiggyBank, faCog } from '@fortawesome/free-solid-svg-icons'
+import { faCalendarAlt, faMoneyBillWave, faChartPie, faPiggyBank, faCog, faHandshake, faHistory, faWallet, faPlus, faEquals } from '@fortawesome/free-solid-svg-icons'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import CustomDatePicker from './CustomDatePicker'
 import CustomInput from './CustomInput'
 import { useThemeStyles } from '../hooks/useThemeStyles'
@@ -16,14 +17,16 @@ import { useThemeStore } from '../store/useThemeStore'
 import { useDerivedData } from '../hooks/useDerivedData'
 import { format } from 'date-fns'
 import { useMonthTransition } from '../hooks/useMonthTransition'
+import OnboardingScreen from './OnboardingScreen'
+import { useDataStore as useDataStoreAll } from '../store/useDataStore'
 
 function MonthSummary() {
-    const { categoryLimits, handleSetCategoryLimit, categories, handleSalaryChange: storeHandleSalaryChange } = useDataStore()
+    const { categoryLimits, handleSetCategoryLimit, categories, handleSalaryChange: storeHandleSalaryChange, expenses: allExpenses } = useDataStore()
     const { currentMonthDate, setCurrentMonthDate, errors, setErrors } = useUIStore()
     const { themeMode, currentTheme } = useThemeStore()
     const activeTheme = appThemes[currentTheme] || appThemes.classic
     
-    const { currentMonthKey, currentMonthExpenses, totalExpenses, remainingSalary, displaySalary } = useDerivedData()
+    const { currentMonthKey, currentSalary, currentMonthExpenses, totalExpenses, remainingSalary, displaySalary, previousBalance, totalAvailable, totalPendingReimbursements } = useDerivedData()
 
     const { s, isDark, activeColor, textGradientClass, focusRingClass, aura } = useThemeStyles(themeMode, activeTheme)
     const { showToast, showPrompt } = useAppAlert(themeMode)
@@ -54,14 +57,15 @@ function MonthSummary() {
         }
     }
 
-    const numericSalary = totalExpenses + remainingSalary
+    const numericSalary = totalAvailable
     const percentSpent = numericSalary > 0 ? (totalExpenses / numericSalary) * 100 : 0
 
     const categoriesWithGradients = categories.map(cat => ({
         id: cat.id,
         name: cat.name,
         emoji: cat.emoji,
-        color: colorThemes[cat.color]?.gradient || colorThemes.slate.gradient
+        color: colorThemes[cat.color]?.gradient || colorThemes.slate.gradient,
+        hexColor: colorThemes[cat.color]?.hex || '#64748b'
     }))
 
     const categoryTotals = currentMonthExpenses.reduce((acc, curr) => {
@@ -69,6 +73,11 @@ function MonthSummary() {
         acc[cat] = (acc[cat] || 0) + curr.amount
         return acc
     }, {})
+
+    // Donut chart data
+    const pieData = categoriesWithGradients
+        .map(cat => ({ name: `${cat.emoji} ${cat.name}`, value: categoryTotals[cat.id] || 0, hexColor: cat.hexColor }))
+        .filter(d => d.value > 0)
 
     let progressBarColor = 'bg-gradient-to-r from-emerald-500 to-teal-400'
     let progressBgGlow = 'shadow-emerald-500/20'
@@ -153,87 +162,194 @@ function MonthSummary() {
                 </div>
             </div>
 
-            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200'} pt-8`}>
-                <SummaryCard
-                    title="Total Gastado"
-                    value={`$${formatCLP(totalExpenses)}`}
-                    icon={faChartPie}
-                    isDark={isDark}
-                    className={isDark ? 'bg-gradient-to-br from-rose-900/80 to-pink-900/80 border-rose-800/50' : 'bg-gradient-to-br from-rose-50 to-pink-50 border-rose-200/60 shadow-inner'}
-                    titleClass={isDark ? 'text-rose-300' : 'text-rose-600'}
-                    valueClass={isDark ? 'text-white' : 'text-rose-700'}
-                />
-                <SummaryCard
-                    title="Saldo Disponible"
-                    value={`$${formatCLP(remainingSalary)}`}
-                    icon={faPiggyBank}
-                    isDark={isDark}
-                    className={remainingSalary < 0
-                        ? (isDark ? 'bg-gradient-to-br from-red-900/80 to-rose-900/80 border border-red-800/50 hover:shadow-red-900/20' : 'bg-gradient-to-br from-red-50 to-rose-50 border border-red-200/60 shadow-inner')
-                        : (isDark ? 'bg-gradient-to-br from-emerald-900/80 to-teal-900/80 border border-emerald-800/50 hover:shadow-emerald-900/20' : 'bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60 shadow-inner')
-                    }
-                    valueClass={remainingSalary < 0 ? (isDark ? 'text-white' : 'text-rose-700') : (isDark ? 'text-white' : 'text-emerald-700')}
-                />
-            </div>
+            {allExpenses.length === 0 ? (
+                <div className={`border-t pt-8 mt-4 ${isDark ? 'border-slate-700/50' : 'border-slate-200'}`}>
+                    <OnboardingScreen isDark={isDark} s={s} aura={aura} activeTheme={activeTheme} />
+                </div>
+            ) : (
+                <>
+                    <div className="mb-6">
+                        <div className={`flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 p-5 sm:p-6 rounded-3xl bg-gradient-to-br ${isDark ? 'from-slate-800/80 to-slate-900/80' : 'from-slate-50 to-slate-100/50'} border ${isDark ? 'border-slate-700/50' : 'border-slate-200'} shadow-sm`}>
+                            
+                            {/* Saldo Anterior */}
+                            <div className={`flex flex-col items-center flex-1 w-full py-4 px-2 rounded-2xl transition-all ${isDark ? 'bg-slate-800/50 border border-slate-700' : 'bg-white border border-slate-200 shadow-sm hover:shadow-md'}`}>
+                                <FontAwesomeIcon icon={faHistory} className={`text-xl sm:text-2xl mb-2 sm:mb-3 ${isDark ? 'text-slate-400' : 'text-slate-400'}`} />
+                                <p className={`text-[10px] uppercase font-black tracking-widest ${s.bodyTextMuted} mb-1 text-center`}>Saldo Anterior</p>
+                                <p className={`text-lg sm:text-xl font-black tabular-nums ${previousBalance >= 0 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-rose-400' : 'text-rose-600')}`}>
+                                    {previousBalance < 0 ? '-' : ''}${formatCLP(Math.abs(previousBalance))}
+                                </p>
+                            </div>
 
-            {numericSalary > 0 && (
-                <div className={`mt-8 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200'} pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300`}>
-                    <div className="flex justify-between items-center mb-2">
-                        <span className={`text-xs font-black ${s.bodyTextMuted} uppercase tracking-wider`}>Progreso de Presupuesto</span>
-                        <span className={`text-sm font-extrabold ${percentSpent >= 100 ? 'text-rose-500' : percentSpent >= 70 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                            {percentSpent.toFixed(0)}% Gastado
-                        </span>
+                            {/* + Icon */}
+                            <div className={`w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-white text-slate-400 shadow-sm border border-slate-100'}`}>
+                                <FontAwesomeIcon icon={faPlus} className="text-xs" />
+                            </div>
+
+                            {/* Sueldo del Mes */}
+                            <div className={`flex flex-col items-center flex-1 w-full py-4 px-2 rounded-2xl transition-all ${isDark ? 'bg-slate-800/50 border border-slate-700' : 'bg-white border border-slate-200 shadow-sm hover:shadow-md'}`}>
+                                <FontAwesomeIcon icon={faMoneyBillWave} className={`text-xl sm:text-2xl mb-2 sm:mb-3 ${isDark ? 'text-emerald-400/70' : 'text-emerald-500/70'}`} />
+                                <p className={`text-[10px] uppercase font-black tracking-widest ${s.bodyTextMuted} mb-1 text-center`}>Sueldo del Mes</p>
+                                <p className={`text-lg sm:text-xl font-black tabular-nums ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>
+                                    ${formatCLP(currentSalary)}
+                                </p>
+                            </div>
+
+                            {/* = Icon */}
+                            <div className={`w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-white text-slate-400 shadow-sm border border-slate-100'}`}>
+                                <FontAwesomeIcon icon={faEquals} className="text-xs" />
+                            </div>
+
+                            {/* Presupuesto Base */}
+                            <div className={`flex flex-col items-center flex-1 w-full py-5 px-2 rounded-2xl border transition-all ${isDark ? 'bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border-indigo-500/30' : 'bg-gradient-to-br from-indigo-50 to-purple-50 border-indigo-200/50 shadow-md hover:shadow-lg'} relative overflow-hidden group`}>
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite]"></div>
+                                <FontAwesomeIcon icon={faWallet} className={`text-xl sm:text-2xl mb-2 sm:mb-3 ${isDark ? 'text-indigo-400' : 'text-indigo-500'}`} />
+                                <p className={`text-[10px] sm:text-xs uppercase font-black tracking-widest ${isDark ? 'text-indigo-300' : 'text-indigo-800'} mb-1 text-center`}>Presupuesto Base</p>
+                                <p className={`text-xl sm:text-2xl font-black tabular-nums ${totalAvailable >= 0 ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-rose-400' : 'text-rose-600')}`}>
+                                    {totalAvailable < 0 ? '-' : ''}${formatCLP(Math.abs(totalAvailable))}
+                                </p>
+                            </div>
+
+                        </div>
                     </div>
 
-                    <ProgressBar
-                        percent={percentSpent}
-                        colorClass={progressBarColor}
-                        trackClass={s.progressTrack}
-                        glowClass={progressBgGlow}
-                    />
-
-                    {progressWarningText && (
-                        <p className={`mt-3 text-xs font-bold text-center p-3 rounded-xl border border-dashed animate-pulse ${percentSpent >= 100
-                            ? (isDark ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' : 'bg-rose-50 border-rose-100 text-rose-700')
-                            : (isDark ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-amber-50 border-amber-100 text-amber-700')
-                            }`}>
-                            {progressWarningText}
-                        </p>
-                    )}
-                </div>
-            )}
-
-            {currentMonthExpenses.length > 0 && (
-                <div className={`mt-8 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200'} pt-8 animate-in fade-in slide-in-from-bottom-2 duration-500`}>
-                    <h4 className={`text-sm font-black ${s.bodyTextMuted} uppercase tracking-wider mb-4`}>Desglose por Categoría</h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        {categoriesWithGradients.map(cat => {
-                            const total = categoryTotals[cat.id] || 0
-                            if (total === 0) return null
-
-                            const limit = categoryLimits[cat.id] || 0
-                            const catPercentOfTotal = totalExpenses > 0 ? (total / totalExpenses) * 100 : 0
-                            const catPercent = limit > 0 ? (total / limit) * 100 : catPercentOfTotal
-                            const isExceeded = limit > 0 && catPercent >= 100
-
-                            return (
-                                <BudgetCategoryItem
-                                    key={cat.id}
-                                    cat={cat}
-                                    total={total}
-                                    limit={limit}
-                                    catPercent={catPercent}
-                                    catPercentOfTotal={catPercentOfTotal}
-                                    isExceeded={isExceeded}
-                                    s={s}
-                                    aura={aura}
-                                    isDark={isDark}
-                                    onSetLimit={handleSetLimitClick}
-                                />
-                            )
-                        })}
+                        <SummaryCard
+                            title="Total Gastado"
+                            value={`$${formatCLP(totalExpenses)}`}
+                            icon={faChartPie}
+                            isDark={isDark}
+                            className={isDark ? 'bg-gradient-to-br from-rose-900/80 to-pink-900/80 border-rose-800/50' : 'bg-gradient-to-br from-rose-50 to-pink-50 border-rose-200/60 shadow-inner'}
+                            titleClass={isDark ? 'text-rose-300' : 'text-rose-600'}
+                            valueClass={isDark ? 'text-white' : 'text-rose-700'}
+                        />
+                        <SummaryCard
+                            title="Saldo Disponible"
+                            value={`$${formatCLP(remainingSalary)}`}
+                            icon={faPiggyBank}
+                            isDark={isDark}
+                            className={remainingSalary < 0
+                                ? (isDark ? 'bg-gradient-to-br from-red-900/80 to-rose-900/80 border border-red-800/50 hover:shadow-red-900/20' : 'bg-gradient-to-br from-red-50 to-rose-50 border border-red-200/60 shadow-inner')
+                                : (isDark ? 'bg-gradient-to-br from-emerald-900/80 to-teal-900/80 border border-emerald-800/50 hover:shadow-emerald-900/20' : 'bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200/60 shadow-inner')
+                            }
+                            valueClass={remainingSalary < 0 ? (isDark ? 'text-white' : 'text-rose-700') : (isDark ? 'text-white' : 'text-emerald-700')}
+                        />
                     </div>
-                </div>
+
+                    {totalPendingReimbursements > 0 && (
+                        <div className={`mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-4 rounded-xl border animate-in fade-in slide-in-from-bottom-2 duration-300 ${isDark ? 'bg-indigo-500/10 border-indigo-500/20' : 'bg-indigo-50 border-indigo-200'}`}>
+                            <div className="flex flex-col sm:flex-row items-center gap-3 text-center sm:text-left">
+                                <FontAwesomeIcon icon={faHandshake} className={`text-xl sm:text-lg ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`} />
+                                <p className={`text-sm sm:text-base font-bold ${isDark ? 'text-indigo-300' : 'text-indigo-800'}`}>
+                                    Tienes dinero pendiente por cobrar de préstamos.
+                                </p>
+                            </div>
+                            <p className={`text-xl sm:text-lg font-black ${isDark ? 'text-indigo-400' : 'text-indigo-600'}`}>
+                                +${formatCLP(totalPendingReimbursements)}
+                            </p>
+                        </div>
+                    )}
+
+                    {numericSalary > 0 && (
+                        <div className={`mt-8 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200'} pt-8 animate-in fade-in slide-in-from-bottom-2 duration-300`}>
+                            <div className="flex justify-between items-center mb-2">
+                                <span className={`text-xs font-black ${s.bodyTextMuted} uppercase tracking-wider`}>Progreso de Presupuesto</span>
+                                <span className={`text-sm font-extrabold ${percentSpent >= 100 ? 'text-rose-500' : percentSpent >= 70 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                                    {percentSpent.toFixed(0)}% Gastado
+                                </span>
+                            </div>
+
+                            <ProgressBar
+                                percent={percentSpent}
+                                colorClass={progressBarColor}
+                                trackClass={s.progressTrack}
+                                glowClass={progressBgGlow}
+                            />
+
+                            {progressWarningText && (
+                                <p className={`mt-3 text-xs font-bold text-center p-3 rounded-xl border border-dashed animate-pulse ${percentSpent >= 100
+                                    ? (isDark ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' : 'bg-rose-50 border-rose-100 text-rose-700')
+                                    : (isDark ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' : 'bg-amber-50 border-amber-100 text-amber-700')
+                                    }`}>
+                                    {progressWarningText}
+                                </p>
+                            )}
+                        </div>
+                    )}
+
+                    {currentMonthExpenses.length > 0 && (
+                        <div className={`mt-8 border-t ${isDark ? 'border-slate-700/50' : 'border-slate-200'} pt-8 animate-in fade-in slide-in-from-bottom-2 duration-500`}>
+                            <h4 className={`text-sm font-black ${s.bodyTextMuted} uppercase tracking-wider mb-6`}>Desglose por Categoría</h4>
+                            
+                            {/* Donut Chart */}
+                            {pieData.length > 0 && (
+                                <div className="mb-6">
+                                    <ResponsiveContainer width="100%" height={220}>
+                                        <PieChart>
+                                            <Pie
+                                                data={pieData}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={60}
+                                                outerRadius={90}
+                                                paddingAngle={3}
+                                                dataKey="value"
+                                                animationBegin={0}
+                                                animationDuration={1000}
+                                            >
+                                                {pieData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.hexColor} opacity={0.85} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip
+                                                formatter={(value) => [`$${formatCLP(value)}`, 'Total']}
+                                                contentStyle={{
+                                                    background: isDark ? '#0f172a' : '#fff',
+                                                    border: `1px solid ${isDark ? '#334155' : '#e2e8f0'}`,
+                                                    borderRadius: '12px',
+                                                    fontSize: '12px',
+                                                    fontWeight: 700
+                                                }}
+                                            />
+                                            <Legend
+                                                iconType="circle"
+                                                iconSize={8}
+                                                formatter={(value) => <span style={{ fontSize: '11px', fontWeight: 700, color: isDark ? '#cbd5e1' : '#475569' }}>{value}</span>}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {categoriesWithGradients.map(cat => {
+                                    const total = categoryTotals[cat.id] || 0
+                                    if (total === 0) return null
+
+                                    const limit = categoryLimits[cat.id] || 0
+                                    const catPercentOfTotal = totalExpenses > 0 ? (total / totalExpenses) * 100 : 0
+                                    const catPercent = limit > 0 ? (total / limit) * 100 : catPercentOfTotal
+                                    const isExceeded = limit > 0 && catPercent >= 100
+
+                                    return (
+                                        <BudgetCategoryItem
+                                            key={cat.id}
+                                            cat={cat}
+                                            total={total}
+                                            limit={limit}
+                                            catPercent={catPercent}
+                                            catPercentOfTotal={catPercentOfTotal}
+                                            isExceeded={isExceeded}
+                                            s={s}
+                                            aura={aura}
+                                            isDark={isDark}
+                                            onSetLimit={handleSetLimitClick}
+                                        />
+                                    )
+                                })}
+                            </div>
+                        </div>
+                    )}
+                </>
             )}
         </div>
     )

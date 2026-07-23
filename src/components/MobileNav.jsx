@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChartPie, faWallet, faCreditCard, faCalendarCheck, faTags, faListUl, faPiggyBank, faChartLine } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChartPie, faWallet, faCreditCard, faCalendarCheck, faTags, faListUl, faPiggyBank, faChartLine, faCalendarAlt } from '@fortawesome/free-solid-svg-icons'
 
 const navItems = [
     { path: '/resumen', label: 'Resumen', icon: faChartPie },
+    { path: '/calendario', label: 'Calendario', icon: faCalendarAlt },
     { path: '/categorias', label: 'Categorías', icon: faTags },
     { path: '/registrar', label: 'Registrar', icon: faWallet },
     { path: '/lista', label: 'Lista', icon: faListUl },

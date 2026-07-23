@@ -3,11 +3,16 @@ import { faWallet, faSun, faMoon } from '@fortawesome/free-solid-svg-icons'
 import { appThemes } from '../utils/theme'
 import { useThemeStyles } from '../hooks/useThemeStyles'
 import { useThemeStore } from '../store/useThemeStore'
+import { faCog } from '@fortawesome/free-solid-svg-icons'
+import { useState } from 'react'
+import SettingsModal from './SettingsModal'
 
 function Header() {
     const { currentTheme, setCurrentTheme, themeMode, setThemeMode } = useThemeStore()
     const activeTheme = appThemes[currentTheme] || appThemes.classic
     const { isDark, aura } = useThemeStyles(themeMode, activeTheme)
+    
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
     return (
         <header className="relative flex flex-col items-center justify-center pt-4 sm:pt-10 pb-2 w-full">
@@ -20,6 +25,15 @@ function Header() {
                     title={isDark ? 'Modo Claro ☀️' : 'Modo Oscuro 🌙'}
                 >
                     <FontAwesomeIcon icon={isDark ? faSun : faMoon} className={`text-xs ${isDark ? 'text-yellow-400' : 'text-slate-500'}`} />
+                </button>
+
+                <button
+                    type="button"
+                    onClick={() => setIsSettingsOpen(true)}
+                    className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all cursor-pointer outline-none select-none border ${aura.button}`}
+                    title="Configuración"
+                >
+                    <FontAwesomeIcon icon={faCog} className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
                 </button>
 
                 <div className={`h-4 w-px mx-0.5 transition-colors ${aura.divider}`}></div>
@@ -61,6 +75,8 @@ function Header() {
                 </p>
                 <div className="h-px w-10 sm:w-16 bg-gradient-to-l from-transparent to-slate-500"></div>
             </div>
+
+            <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
         </header>
     )
 }

@@ -1,14 +1,36 @@
-function ProgressBar({ percent, colorClass, trackClass, size = 'md', glowClass = '' }) {
-    const heightClass = size === 'sm' ? 'h-2' : 'h-4'
-    const baseTrack = `w-full ${heightClass} ${trackClass} rounded-full overflow-hidden p-0.5 shadow-inner`
-    const baseBar = `h-full rounded-full transition-all duration-500 ${glowClass ? `shadow-[0_0_12px_var(--tw-shadow-color)] ${glowClass}` : ''} ${colorClass}`
+import { useEffect, useRef, useState } from 'react'
+
+function ProgressBar({ percent, colorClass, trackClass, glowClass }) {
+    const [width, setWidth] = useState(0)
+    const [hasAnimated, setHasAnimated] = useState(false)
+    const barRef = useRef(null)
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting && !hasAnimated) {
+                    setHasAnimated(true)
+                    // small delay so the bar is visible before animating
+                    setTimeout(() => setWidth(Math.min(percent, 100)), 100)
+                }
+            },
+            { threshold: 0.3 }
+        )
+        if (barRef.current) observer.observe(barRef.current)
+        return () => observer.disconnect()
+    }, [percent, hasAnimated])
+
+    // re-trigger if percent changes
+    useEffect(() => {
+        if (hasAnimated) setWidth(Math.min(percent, 100))
+    }, [percent, hasAnimated])
 
     return (
-        <div className={baseTrack}>
+        <div ref={barRef} className={`w-full h-3 rounded-full overflow-hidden ${trackClass}`}>
             <div
-                style={{ width: `${Math.min(percent, 100)}%` }}
-                className={baseBar}
-            ></div>
+                className={`h-full rounded-full ${colorClass} ${glowClass} transition-all duration-1000 ease-out`}
+                style={{ width: `${width}%` }}
+            />
         </div>
     )
 }

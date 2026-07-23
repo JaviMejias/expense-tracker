@@ -8,7 +8,7 @@ import ErrorFallback from './components/ErrorFallback'
 import ReloadPrompt from './components/ReloadPrompt'
 import AuraBackground from './components/AuraBackground'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faWallet, faListUl, faCalendarCheck, faChartLine, faPiggyBank, faTags, faChartPie, faSpinner, faCreditCard } from '@fortawesome/free-solid-svg-icons'
+import { faWallet, faListUl, faCalendarCheck, faChartLine, faPiggyBank, faTags, faChartPie, faSpinner, faCreditCard, faCalendarAlt } from '@fortawesome/free-solid-svg-icons'
 import { appThemes, getThemeClass } from './utils/theme'
 import { useThemeStore } from './store/useThemeStore'
 import { useAppAlert } from './hooks/useAppAlert'
@@ -25,11 +25,18 @@ const MobileNav = lazy(() => import('./components/MobileNav'))
 const Analytics = lazy(() => import('./components/Analytics'))
 const CategoryManager = lazy(() => import('./components/CategoryManager'))
 const SavingsGoals = lazy(() => import('./components/SavingsGoals'))
+const CalendarView = lazy(() => import('./components/CalendarView'))
+
+import { AnimatePresence } from 'framer-motion'
+import PageTransition from './components/PageTransition'
 
 const LoaderFallback = () => (
-  <div className="flex flex-col items-center justify-center p-20 opacity-50 animate-pulse relative z-10">
-    <FontAwesomeIcon icon={faSpinner} spin className="text-4xl mb-4 text-indigo-500" />
-    <p className="font-bold tracking-widest uppercase text-xs">Cargando módulo...</p>
+  <div className="space-y-4 p-2">
+    {[1, 2, 3].map(i => (
+      <div key={i} className="animate-skeleton rounded-2xl" style={{ animationDelay: `${i * 100}ms` }}>
+        <div className={`h-24 rounded-2xl bg-slate-800/60 animate-skeleton`} style={{ animationDelay: `${i * 150}ms` }} />
+      </div>
+    ))}
   </div>
 )
 
@@ -92,81 +99,7 @@ function App() {
     }
   }, [_hasHydrated, handleMonthTransition, lastSeenMonth, setLastSeenMonth])
 
-  const globalDatePickerStyles = `
-      .aura-datepicker-${activeColor} .react-datepicker {
-          font-family: inherit;
-          background-color: ${isDark ? '#1e293b' : '#ffffff'} !important;
-          border: 1px solid ${isDark ? '#334155' : '#e2e8f0'} !important;
-          border-radius: 1rem !important;
-          overflow: hidden;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2) !important;
-      }
-      .aura-datepicker-${activeColor} .react-datepicker__header {
-          background-color: ${isDark ? '#0f172a' : '#f8fafc'} !important;
-          border-bottom: 1px solid ${auraBgHover} !important;
-      }
-      .aura-datepicker-${activeColor} .react-datepicker__current-month,
-      .aura-datepicker-${activeColor} .react-datepicker-year-header {
-          color: ${auraHex} !important;
-          font-weight: 900 !important;
-      }
-      .aura-datepicker-${activeColor} .react-datepicker__day-name {
-          color: ${isDark ? '#cbd5e1' : '#475569'} !important;
-          font-weight: 800 !important;
-      }
-      .aura-datepicker-${activeColor} .react-datepicker__day,
-      .aura-datepicker-${activeColor} .react-datepicker__month-text,
-      .aura-datepicker-${activeColor} .react-datepicker__year-text {
-          color: ${isDark ? '#cbd5e1' : '#334155'} !important;
-          border-radius: 0.5rem !important;
-      }
-      .aura-datepicker-${activeColor} .react-datepicker__day:hover,
-      .aura-datepicker-${activeColor} .react-datepicker__month-text:hover,
-      .aura-datepicker-${activeColor} .react-datepicker__year-text:hover {
-          background-color: ${auraBgHover} !important;
-          color: ${auraHex} !important;
-      }
-      .aura-datepicker-${activeColor} .react-datepicker__day--selected,
-      .aura-datepicker-${activeColor} .react-datepicker__day--keyboard-selected,
-      .aura-datepicker-${activeColor} .react-datepicker__month-text--selected,
-      .aura-datepicker-${activeColor} .react-datepicker__month-text--keyboard-selected,
-      .aura-datepicker-${activeColor} .react-datepicker__month--selected,
-      .aura-datepicker-${activeColor} .react-datepicker__month--keyboard-selected,
-      .aura-datepicker-${activeColor} .react-datepicker__year-text--selected,
-      .aura-datepicker-${activeColor} .react-datepicker__year-text--keyboard-selected,
-      .aura-datepicker-${activeColor} .react-datepicker__day[aria-selected="true"],
-      .aura-datepicker-${activeColor} .react-datepicker__month-text[aria-selected="true"],
-      .aura-datepicker-${activeColor} .react-datepicker__year-text[aria-selected="true"] {
-          background-color: ${auraHex} !important;
-          color: #ffffff !important;
-          font-weight: 900 !important;
-      }
-      .aura-datepicker-${activeColor} .react-datepicker__day--today,
-      .aura-datepicker-${activeColor} .react-datepicker__month-text--today,
-      .aura-datepicker-${activeColor} .react-datepicker__year-text--today {
-          border: 1px solid ${auraHex} !important;
-          color: ${auraHex} !important;
-          font-weight: 900 !important;
-          background-color: transparent !important;
-      }
-      .aura-datepicker-${activeColor} .react-datepicker__day--today.react-datepicker__day--selected,
-      .aura-datepicker-${activeColor} .react-datepicker__day--today.react-datepicker__day--keyboard-selected,
-      .aura-datepicker-${activeColor} .react-datepicker__month-text--today.react-datepicker__month-text--selected,
-      .aura-datepicker-${activeColor} .react-datepicker__month-text--today.react-datepicker__month-text--keyboard-selected,
-      .aura-datepicker-${activeColor} .react-datepicker__month-text--today.react-datepicker__month--selected,
-      .aura-datepicker-${activeColor} .react-datepicker__month-text--today[aria-selected="true"],
-      .aura-datepicker-${activeColor} .react-datepicker__day--today[aria-selected="true"] {
-          background-color: ${auraHex} !important;
-          color: #ffffff !important;
-          border-color: ${auraHex} !important;
-      }
-      .aura-datepicker-${activeColor} .react-datepicker__navigation-icon::before {
-          border-color: ${auraHex} !important;
-      }
-      .react-datepicker-popper {
-          z-index: 9999 !important;
-      }
-  `
+
 
   const getNavLinkClass = ({ isActive }) => 
     `md:flex-1 flex-shrink-0 py-4 font-bold text-sm sm:text-base rounded-2xl transition-all duration-300 px-3 lg:px-5 flex items-center justify-center gap-2 cursor-pointer select-none ${isActive ? activeTheme.activeTab : (isDark ? activeTheme.inactiveTab : activeTheme.inactiveTabLight)}`
@@ -174,7 +107,6 @@ function App() {
   return (
     <div className={`min-h-screen relative ${!isDark ? 'light-theme' : ''} ${isDark ? 'bg-slate-950 text-slate-100 selection:bg-[rgba(var(--aura-rgb),0.3)] selection:text-white' : 'bg-slate-50 text-slate-800 selection:bg-[rgba(var(--aura-rgb),0.2)] selection:text-slate-900'} font-sans transition-all duration-1000`}>
       <AuraBackground activeColor={activeColor} isDark={isDark} />
-      <style dangerouslySetInnerHTML={{ __html: globalDatePickerStyles }} />
       <div className="w-full relative z-10 space-y-8 animate-fade-in py-8 px-4 sm:px-6 lg:px-8">
         <Header />
 
@@ -183,6 +115,9 @@ function App() {
           <div className={`hidden md:flex p-3 ${isDark ? 'bg-slate-900/40' : 'bg-white/40'} backdrop-blur-sm border-b border-[rgba(var(--aura-rgb),0.1)] flex-wrap lg:flex-nowrap gap-2 w-full transition-all duration-500`}>
             <NavLink to="/resumen" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faChartPie} /> Resumen
+            </NavLink>
+            <NavLink to="/calendario" className={getNavLinkClass}>
+              <FontAwesomeIcon icon={faCalendarAlt} /> Calendario
             </NavLink>
             <NavLink to="/categorias" className={getNavLinkClass}>
               <FontAwesomeIcon icon={faTags} /> Categorías
@@ -214,20 +149,23 @@ function App() {
             </Suspense>
           </div>
 
-          <div className="p-6 sm:p-8 min-h-[300px]">
+          <div className="p-6 sm:p-8 min-h-[300px] overflow-hidden relative">
             <ErrorBoundary FallbackComponent={ErrorFallback}>
               <Suspense fallback={<LoaderFallback />}>
-                <Routes>
-                  <Route path="/" element={<Navigate to={localStorage.getItem('lastTab') || '/resumen'} replace />} />
-                  <Route path="/resumen" element={<MonthSummary />} />
-                  <Route path="/registrar" element={<div className="space-y-8"><ExpenseForm /></div>} />
-                  <Route path="/categorias" element={<div className="space-y-8"><CategoryManager /></div>} />
-                  <Route path="/lista" element={<ExpenseList />} />
-                  <Route path="/cuotas" element={<Installments />} />
-                  <Route path="/fijos" element={<FixedExpenses />} />
-                  <Route path="/ahorros" element={<SavingsGoals onCompleteCelebrate={() => setConfettiTrigger(prev => prev + 1)} />} />
-                  <Route path="/estadisticas" element={<Analytics />} />
-                </Routes>
+                <AnimatePresence mode="wait">
+                  <Routes location={location} key={location.pathname}>
+                    <Route path="/" element={<Navigate to={localStorage.getItem('lastTab') || '/resumen'} replace />} />
+                    <Route path="/resumen" element={<PageTransition><MonthSummary /></PageTransition>} />
+                    <Route path="/calendario" element={<PageTransition><CalendarView /></PageTransition>} />
+                    <Route path="/registrar" element={<PageTransition><div className="space-y-8"><ExpenseForm /></div></PageTransition>} />
+                    <Route path="/categorias" element={<PageTransition><div className="space-y-8"><CategoryManager /></div></PageTransition>} />
+                    <Route path="/lista" element={<PageTransition><ExpenseList /></PageTransition>} />
+                    <Route path="/cuotas" element={<PageTransition><Installments /></PageTransition>} />
+                    <Route path="/fijos" element={<PageTransition><FixedExpenses /></PageTransition>} />
+                    <Route path="/ahorros" element={<PageTransition><SavingsGoals onCompleteCelebrate={() => setConfettiTrigger(prev => prev + 1)} /></PageTransition>} />
+                    <Route path="/estadisticas" element={<PageTransition><Analytics /></PageTransition>} />
+                  </Routes>
+                </AnimatePresence>
               </Suspense>
             </ErrorBoundary>
           </div>

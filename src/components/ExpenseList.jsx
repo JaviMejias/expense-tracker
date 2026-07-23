@@ -1,20 +1,16 @@
 import { useState } from 'react'
-import { format, parseISO, startOfMonth, endOfMonth } from 'date-fns'
+import { parseISO, startOfMonth, endOfMonth, format } from 'date-fns'
 import { es } from 'date-fns/locale'
-import { formatCLP } from '../utils/currency'
+import { motion, AnimatePresence } from 'framer-motion'
+import { formatCLP, parseCLP } from '../utils/currency'
+import { faSearchDollar, faGhost, faListUl, faList } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faEdit, faTrash, faSearchDollar, faGhost, faCopy, faTag } from '@fortawesome/free-solid-svg-icons'
 import SectionHeader from './SectionHeader'
 import { useExpensesFilter } from '../hooks/useExpensesFilter'
-import CustomDatePicker from './CustomDatePicker'
-import CustomInput from './CustomInput'
 import { useThemeStyles } from '../hooks/useThemeStyles'
 import { useAppAlert } from '../hooks/useAppAlert'
 import EmptyState from './EmptyState'
-import CustomButton from './CustomButton'
-import CategoryBadge from './CategoryBadge'
 import ExpenseListItem from './ExpenseListItem'
-import CustomSelect from './CustomSelect'
 import { useCategoryStyles } from '../hooks/useCategoryStyles'
 import { appThemes } from '../utils/theme'
 import { useNavigate } from 'react-router-dom'
@@ -23,17 +19,12 @@ import { useDataStore } from '../store/useDataStore'
 import { useUIStore } from '../store/useUIStore'
 import { useThemeStore } from '../store/useThemeStore'
 
-const sortOptions = [
-    { value: 'date-desc', label: '📅 Fecha: Reciente primero' },
-    { value: 'date-asc', label: '📅 Fecha: Antiguo primero' },
-    { value: 'amount-desc', label: '💰 Monto: Mayor a menor' },
-    { value: 'amount-asc', label: '💰 Monto: Menor a mayor' },
-    { value: 'desc-az', label: '🔤 Nombre: A-Z' }
-]
+import ExpenseListFilters from './ExpenseListFilters'
+import ExpenseBulkActions from './ExpenseBulkActions'
 
 function ExpenseList() {
-    const { expenses, deleteExpense, duplicateExpenses, bulkUpdateExpenseCategory, categories } = useDataStore()
-    const { currentMonthDate, setEditingId, setExpenseDate, setDescription, setAmount, setCategory } = useUIStore()
+    const { expenses, deleteExpense, duplicateExpenses, bulkUpdateExpenseCategory, categories, registerReimbursement, forgiveReimbursement } = useDataStore()
+    const { currentMonthDate } = useUIStore()
     const navigate = useNavigate()
     const { themeMode, currentTheme } = useThemeStore()
     const activeTheme = appThemes[currentTheme] || appThemes.classic
@@ -44,6 +35,7 @@ function ExpenseList() {
     const [selectedIds, setSelectedIds] = useState([])
     const [searchQuery, setSearchQuery] = useState('')
     const [sortBy, setSortBy] = useState('date-desc')
+    const [compactMode, setCompactMode] = useState(false)
     const { showToast, showConfirm, showPrompt } = useAppAlert(themeMode)
 
     const categoryStyles = useCategoryStyles(categories)
@@ -51,12 +43,7 @@ function ExpenseList() {
     const { filteredExpenses, sortedExpenses } = useExpensesFilter(expenses, startDate, endDate, searchQuery, sortBy, categoryStyles)
 
     const handleEdit = (expense) => {
-        navigate('/registrar')
-        setEditingId(expense.id)
-        setExpenseDate(parseISO(expense.date))
-        setDescription(expense.description)
-        setAmount(formatCLP(expense.amount))
-        setCategory(expense.category || 'otros')
+        navigate('/registrar', { state: { editExpense: expense } })
     }
 
     const handleToggleSelect = (id) => {
@@ -148,6 +135,48 @@ function ExpenseList() {
         }
     }
 
+    const handleReimburseClick = async (expense) => {
+        const remainingToReimburse = expense.amount - (expense.reimbursedAmount || 0)
+        if (remainingToReimburse <= 0) return
+
+        const result = await showPrompt({
+            title: 'Recibir Pago',
+            text: `El monto total del préstamo fue $${formatCLP(expense.amount)}. Hasta ahora han devuelto $${formatCLP(expense.reimbursedAmount || 0)}. Faltan $${formatCLP(remainingToReimburse)}. ¿Cuánto dinero recibiste hoy?`,
+            input: 'text',
+            inputValue: formatCLP(remainingToReimburse),
+            showCancelButton: true,
+            confirmButtonText: 'Registrar Pago',
+            cancelButtonText: 'Cancelar',
+            isAmountPrompt: true,
+            inputValidator: (value) => {
+                const numericVal = parseCLP(value)
+                if (numericVal <= 0) return 'Por favor ingresa un monto válido mayor a cero.'
+                if (numericVal > remainingToReimburse) return `No puedes registrar más del saldo pendiente ($${formatCLP(remainingToReimburse)}).`
+            }
+        })
+
+        if (result.isConfirmed && result.value) {
+            const amountReceived = parseCLP(result.value)
+            registerReimbursement(expense.id, amountReceived)
+            showToast(`¡$${formatCLP(amountReceived)} recuperados y sumados a tu sueldo! 🎉`, 'success', 3000)
+        }
+    }
+
+    const handleForgiveClick = async (expense) => {
+        const remainingToReimburse = expense.amount - (expense.reimbursedAmount || 0)
+        const result = await showConfirm(
+            '¿Perdonar deuda restante?',
+            `Faltan $${formatCLP(remainingToReimburse)} por recuperar de este préstamo. Si perdonas la deuda, dejará de ser reembolsable y el monto restante se asumirá permanentemente como un gasto tuyo. Esta acción no se puede deshacer.`,
+            'Sí, perdonar deuda',
+            false
+        )
+
+        if (result.isConfirmed) {
+            forgiveReimbursement(expense.id)
+            showToast(`Deuda perdonada. El restante ha sido asumido como gasto.`, 'info')
+        }
+    }
+
     return (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
@@ -158,159 +187,108 @@ function ExpenseList() {
                     iconClass={aura.icon}
                     className="!mb-0"
                 />
+                <button
+                    onClick={() => setCompactMode(c => !c)}
+                    title={compactMode ? 'Vista Normal' : 'Vista Compacta'}
+                    className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest px-3 py-2 rounded-xl border transition-all duration-300 ${
+                        compactMode
+                            ? (isDark ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300' : 'bg-indigo-50 border-indigo-200 text-indigo-600')
+                            : (isDark ? 'bg-slate-800/50 border-slate-700 text-slate-400 hover:text-slate-200' : 'bg-white border-slate-200 text-slate-500 hover:text-slate-700')
+                    }`}
+                >
+                    <FontAwesomeIcon icon={compactMode ? faList : faListUl} />
+                    {compactMode ? 'Compacto' : 'Normal'}
+                </button>
             </div>
 
-            <div className={`${s.itemBg} p-4 rounded-2xl mb-4 flex flex-col sm:flex-row gap-4`}>
-                <div className="flex-1">
-                    <label className={`block text-xs font-bold ${aura.label} mb-1 uppercase tracking-wider`}>Desde</label>
-                    <CustomDatePicker
-                        selected={startDate}
-                        onChange={(date) => {
-                            setStartDate(date)
-                            setSelectedIds([])
-                        }}
-                        activeColor={activeColor}
-                        activeTheme={activeTheme}
-                        isDark={isDark}
-                        s={s}
-                        focusRingClass={focusRingClass}
-                        className="px-4 py-3 rounded-xl font-bold capitalize"
-                    />
-                </div>
-                <div className="flex-1">
-                    <label className={`block text-xs font-bold ${aura.label} mb-1 uppercase tracking-wider`}>Hasta</label>
-                    <CustomDatePicker
-                        selected={endDate}
-                        onChange={(date) => {
-                            setEndDate(date)
-                            setSelectedIds([])
-                        }}
-                        activeColor={activeColor}
-                        activeTheme={activeTheme}
-                        isDark={isDark}
-                        s={s}
-                        focusRingClass={focusRingClass}
-                        className="px-4 py-3 rounded-xl font-bold capitalize"
-                    />
-                </div>
-            </div>
+            <ExpenseListFilters
+                startDate={startDate} setStartDate={setStartDate}
+                endDate={endDate} setEndDate={setEndDate}
+                searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+                sortBy={sortBy} setSortBy={setSortBy}
+                setSelectedIds={setSelectedIds}
+                activeColor={activeColor} activeTheme={activeTheme} isDark={isDark} s={s} focusRingClass={focusRingClass} aura={aura}
+            />
 
-            <div className={`${s.itemBg} p-4 rounded-2xl mb-6 flex flex-col md:flex-row items-center gap-4`}>
-                <div className="w-full md:flex-1">
-                    <CustomInput
-                        value={searchQuery}
-                        onChange={(e) => {
-                            setSearchQuery(e.target.value)
-                            setSelectedIds([])
-                        }}
-                        placeholder="Buscar por descripción o categoría (Ej: Comida, Uber, Supermercado)..."
-                        icon={faSearchDollar}
-                        iconClass={aura.icon}
-                        s={s}
-                        focusRingClass={focusRingClass}
-                        className="py-3 rounded-xl font-medium text-sm"
-                        rightElement={
-                            searchQuery && (
-                                <button onClick={() => { setSearchQuery(''); setSelectedIds([]) }} className={`transition-colors text-xs font-black uppercase tracking-wider select-none cursor-pointer ${aura.listClearBtn}`}>
-                                    Limpiar
-                                </button>
-                            )
-                        }
-                    />
-                </div>
+            <ExpenseBulkActions
+                filteredExpenses={filteredExpenses}
+                selectedIds={selectedIds}
+                handleSelectAllToggle={handleSelectAllToggle}
+                handleBulkAssignCategory={handleBulkAssignCategory}
+                handleBulkDuplicateClick={handleBulkDuplicateClick}
+                handleBulkDeleteClick={handleBulkDeleteClick}
+                isDark={isDark}
+                aura={aura}
+            />
 
-                <div className="w-full md:w-64">
-                    <CustomSelect
-                        value={sortBy}
-                        onChange={(e) => setSortBy(e.target.value)}
-                        options={sortOptions}
-                        s={s}
-                        focusRingClass={focusRingClass}
-                        isDark={isDark}
-                        className="px-4 py-3 rounded-xl font-bold text-sm"
-                    />
-                </div>
-            </div>
-
-            {filteredExpenses.length > 0 && (
-                <div className={`flex flex-col sm:flex-row sm:items-center justify-between ${isDark ? 'bg-slate-900/30 border-slate-700/50' : 'bg-slate-100/60 border-slate-200'} border p-4 rounded-2xl mb-6 gap-4 animate-in fade-in slide-in-from-top-2 duration-300`}>
-                    <div className="flex items-center gap-3">
-                        <label className={`flex items-center gap-3 cursor-pointer text-sm font-bold transition-colors select-none ${isDark ? 'text-slate-300' : 'text-slate-700'} ${aura.listHoverText}`}>
-                            <input
-                                type="checkbox"
-                                checked={filteredExpenses.length > 0 && selectedIds.length === filteredExpenses.length}
-                                ref={(input) => {
-                                    if (input) {
-                                        input.indeterminate = selectedIds.length > 0 && selectedIds.length < filteredExpenses.length;
-                                    }
-                                }}
-                                onChange={handleSelectAllToggle}
-                                className={`w-5 h-5 rounded-md transition-all cursor-pointer ${aura.listCheckbox}`}
+            <div className={compactMode ? 'space-y-1' : 'space-y-4'}>
+                <AnimatePresence mode="popLayout">
+                    {filteredExpenses.length === 0 ? (
+                        <motion.div
+                            key="empty"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <EmptyState
+                                icon={faGhost}
+                                message="Todo tranquilo, no hay gastos por aquí."
+                                isDark={isDark}
                             />
-                            <span>Seleccionar todos ({filteredExpenses.length})</span>
-                        </label>
-                    </div>
-
-                    {selectedIds.length > 0 && (
-                        <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto animate-in fade-in zoom-in-95 duration-200">
-                            <span className={`text-sm font-black px-3 py-1.5 rounded-xl w-full sm:w-auto text-center border ${aura.badge}`}>
-                                {selectedIds.length} {selectedIds.length === 1 ? 'seleccionado' : 'seleccionados'}
-                            </span>
-                            <div className="flex gap-2 w-full sm:w-auto">
-                                <CustomButton
-                                    onClick={handleBulkAssignCategory}
-                                    variant="custom"
-                                    icon={faTag}
-                                    className={`flex-1 sm:flex-none py-2.5 px-4 text-sm shadow-md ${aura.listActionBtn}`}
-                                >
-                                    Categoría
-                                </CustomButton>
-                                <CustomButton
-                                    onClick={handleBulkDuplicateClick}
-                                    variant="custom"
-                                    icon={faCopy}
-                                    className={`flex-1 sm:flex-none py-2.5 px-4 text-sm shadow-md ${aura.listActionBtn}`}
-                                >
-                                    Duplicar
-                                </CustomButton>
-                                <CustomButton
-                                    onClick={handleBulkDeleteClick}
-                                    variant="danger"
-                                    icon={faTrash}
-                                    className="flex-1 sm:flex-none py-2.5 px-4 text-sm"
-                                >
-                                    Eliminar
-                                </CustomButton>
-                            </div>
-                        </div>
+                        </motion.div>
+                    ) : compactMode ? (
+                        <motion.div key="compact" layout className={`rounded-2xl border overflow-hidden ${isDark ? 'border-slate-700/50' : 'border-slate-200'}`}>
+                            <AnimatePresence mode="popLayout">
+                                {sortedExpenses.map((expense, index) => {
+                                    const catStyle = categoryStyles[expense.category] || categoryStyles['otros']
+                                    return (
+                                        <motion.div
+                                            key={expense.id}
+                                            layout
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, scale: 0.95, backgroundColor: 'rgba(244, 63, 94, 0.1)' }}
+                                            transition={{ type: 'spring', stiffness: 600, damping: 35, mass: 1, delay: Math.min(index * 0.02, 0.3) }}
+                                            className={`flex items-center gap-3 px-4 py-2.5 border-b last:border-b-0 cursor-pointer ${
+                                                isDark
+                                                    ? 'border-slate-700/50 hover:bg-slate-800/50'
+                                                    : 'border-slate-100 hover:bg-slate-50'
+                                            }`}
+                                            onClick={() => handleEdit(expense)}
+                                        >
+                                            <span className="text-base">{catStyle?.emoji || '🏷️'}</span>
+                                            <span className={`flex-1 text-sm font-bold truncate ${s.bodyText}`}>{expense.description}</span>
+                                            <span className={`text-[10px] font-bold ${s.bodyTextMuted} hidden sm:block`}>
+                                                {format(parseISO(expense.date), 'dd MMM', { locale: es })}
+                                            </span>
+                                            <span className="text-sm font-black text-rose-400">-${formatCLP(expense.amount)}</span>
+                                        </motion.div>
+                                    )
+                                })}
+                            </AnimatePresence>
+                        </motion.div>
+                    ) : (
+                        sortedExpenses.map((expense, index) => (
+                            <ExpenseListItem
+                                key={expense.id}
+                                expense={expense}
+                                index={index}
+                                isSelected={selectedIds.includes(expense.id)}
+                                onToggleSelect={handleToggleSelect}
+                                onEdit={handleEdit}
+                                onDelete={handleDeleteClick}
+                                categoryStyle={categoryStyles[expense.category] || categoryStyles['otros']}
+                                s={s}
+                                aura={aura}
+                                activeTheme={activeTheme}
+                                isDark={isDark}
+                                onReimburse={handleReimburseClick}
+                                onForgive={handleForgiveClick}
+                            />
+                        ))
                     )}
-                </div>
-            )}
-
-            <div className="space-y-4">
-                {filteredExpenses.length === 0 ? (
-                    <EmptyState
-                        icon={faGhost}
-                        message="Todo tranquilo, no hay gastos por aquí."
-                        isDark={isDark}
-                    />
-                ) : (
-                    sortedExpenses.map(expense => (
-                        <ExpenseListItem
-                            key={expense.id}
-                            expense={expense}
-                            isSelected={selectedIds.includes(expense.id)}
-                            onToggleSelect={handleToggleSelect}
-                            onEdit={handleEdit}
-                            onDelete={handleDeleteClick}
-                            categoryStyle={categoryStyles[expense.category] || categoryStyles['otros']}
-                            s={s}
-                            aura={aura}
-                            activeTheme={activeTheme}
-                            isDark={isDark}
-                        />
-                    ))
-                )}
+                </AnimatePresence>
             </div>
         </div>
     )
