@@ -90,7 +90,7 @@ function App() {
     } else {
       setLastSeenMonth(currentMonthKey)
     }
-  }, [_hasHydrated])
+  }, [_hasHydrated, handleMonthTransition, lastSeenMonth, setLastSeenMonth])
 
   const globalDatePickerStyles = `
       .aura-datepicker-${activeColor} .react-datepicker {

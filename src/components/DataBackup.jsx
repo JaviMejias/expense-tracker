@@ -86,14 +86,14 @@ function DataBackup() {
                     window.location.reload()
                 } else {
                     // Collect all error messages
-                    const errorMessages = validation.error.errors.map(err => {
+                    const errorMessages = validation.error.issues.map(err => {
                         const path = err.path.join('.')
                         return `${path ? `[${path}] ` : ''}${err.message}`
-                    }).join('<br>')
+                    }).join('\n')
 
                     showAlert(
                         'Archivo Inválido o Corrupto',
-                        `El archivo no cumple con el formato requerido. Se encontraron los siguientes errores:<br><br><div style="text-align: left; font-size: 0.85em; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.1); padding: 10px; border-radius: 8px;">${errorMessages}</div>`,
+                        `El archivo no cumple con el formato requerido. Se encontraron los siguientes errores:\n\n${errorMessages}`,
                         'error'
                     )
                 }

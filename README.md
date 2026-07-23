@@ -47,18 +47,37 @@ Todo el diseño responde a un único archivo `theme.js` y al hook `useThemeStyle
 
 ## 🛠️ Instalación y Uso
 
+### Requisitos
+
+- Node.js 20.19 o superior.
+- npm 10 o superior.
+
 1. Clona el repositorio:
 ```bash
 git clone https://github.com/tu-usuario/expense-tracker.git
 ```
+
 2. Instala las dependencias:
 ```bash
 npm install
 ```
+
 3. Inicia el servidor de desarrollo:
 ```bash
 npm run dev
 ```
+
+## ✅ Verificación
+
+Antes de abrir un PR o desplegar, ejecuta:
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+Si alguno falla, corrige el error antes de publicar cambios.
 
 ---
 *Desarrollado con ❤️ y las mejores prácticas de React.*

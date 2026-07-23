@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { format, parse, parseISO } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { formatCLP } from '../utils/currency'
@@ -26,7 +27,7 @@ export function useMonthTransition() {
     const { themeMode } = useThemeStore()
     const { showConfirm, showToast, showThreeWay } = useAppAlert(themeMode)
 
-    const handleMonthTransition = async (fromMonthKey, toMonthKey) => {
+    const handleMonthTransition = useCallback(async (fromMonthKey, toMonthKey) => {
         const transitionKey = `${fromMonthKey}-${toMonthKey}`
         if (decidedTransitions.has(transitionKey)) return
         decidedTransitions.add(transitionKey)
@@ -94,7 +95,7 @@ export function useMonthTransition() {
             }
             // isDismissed = "Recordar después" → sin acción, queda como pendiente
         }
-    }
+    }, [showConfirm, showToast, showThreeWay])
 
     return { handleMonthTransition }
 }

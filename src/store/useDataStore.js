@@ -117,11 +117,17 @@ export const useDataStore = create(
                 return { expenses: [...state.expenses, ...duplicated] }
             }),
 
-            applyFixedExpenseToMonth: (fixedExpense, currentMonthDate) => set((state) => {
+            applyFixedExpenseToMonth: (fixedExpense, currentMonthDate, options = {}) => set((state) => {
                 const year = currentMonthDate.getFullYear()
                 const month = currentMonthDate.getMonth()
                 const currentMonthKey = format(currentMonthDate, 'MM-yyyy')
                 const newExpenses = [...state.expenses]
+                const storedFixedExpense = state.fixedExpenses.find(item => item.id === fixedExpense.id)
+                const appliedMonths = storedFixedExpense?.appliedMonths || []
+
+                if (appliedMonths.includes(currentMonthKey) && !options.forceDuplicate) {
+                    return {}
+                }
 
                 if (fixedExpense.type === 'single') {
                     const firstDayOfMonth = new Date(year, month, 1)
@@ -150,7 +156,7 @@ export const useDataStore = create(
 
                 const newFixedExpenses = state.fixedExpenses.map(item => {
                     if (item.id === fixedExpense.id) {
-                        const applied = item.appliedMonths || []
+                        const applied = appliedMonths
                         if (!applied.includes(currentMonthKey)) {
                             return { ...item, appliedMonths: [...applied, currentMonthKey] }
                         }
@@ -187,6 +193,10 @@ export const useDataStore = create(
             applyInstallmentToMonth: (id, monthKey) => set((state) => {
                 const inst = (state.installments || []).find(i => i.id === id)
                 if (!inst) return {}
+                const appliedMonths = inst.appliedMonths || []
+                if (appliedMonths.includes(monthKey)) {
+                    return {}
+                }
                 const [mm, yyyy] = monthKey.split('-').map(Number)
                 const expenseDate = new Date(yyyy, mm - 1, 1)
                 const [fMM, fYYYY] = inst.firstPaymentMonth.split('-').map(Number)
@@ -205,7 +215,7 @@ export const useDataStore = create(
                         i.id === id
                             ? {
                                 ...i,
-                                appliedMonths: [...i.appliedMonths, monthKey],
+                                appliedMonths: [...appliedMonths, monthKey],
                                 skippedMonths: (i.skippedMonths || []).filter(m => m !== monthKey)
                               }
                             : i
@@ -215,11 +225,17 @@ export const useDataStore = create(
             }),
 
             skipInstallmentMonth: (id, monthKey) => set((state) => ({
-                installments: (state.installments || []).map(i =>
-                    i.id === id
-                        ? { ...i, skippedMonths: [...(i.skippedMonths || []), monthKey] }
-                        : i
-                )
+                installments: (state.installments || []).map(i => {
+                    if (i.id !== id) return i
+
+                    const appliedMonths = i.appliedMonths || []
+                    const skippedMonths = i.skippedMonths || []
+                    if (appliedMonths.includes(monthKey) || skippedMonths.includes(monthKey)) {
+                        return i
+                    }
+
+                    return { ...i, skippedMonths: [...skippedMonths, monthKey] }
+                })
             })),
 
             addCategory: (newCat) => {

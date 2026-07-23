@@ -62,6 +62,7 @@ function FixedExpenses() {
 
     const handleApplyToMonth = async (item) => {
         const applied = item.appliedMonths || []
+        const forceDuplicate = applied.includes(currentMonthKey)
         if (applied.includes(currentMonthKey)) {
             const result = await showConfirm(
                 '¿Plantilla duplicada?',
@@ -71,7 +72,7 @@ function FixedExpenses() {
             )
             if (!result.isConfirmed) return
         }
-        applyFixedExpenseToMonth(item, currentMonthDate)
+        applyFixedExpenseToMonth(item, currentMonthDate, { forceDuplicate })
         showToast(`¡"${item.description}" añadido a ${format(currentMonthDate, 'MMMM', { locale: es })}!`)
     }
 
